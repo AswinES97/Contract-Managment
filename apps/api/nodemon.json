@@ -1,0 +1,6 @@
+{
+  "watch": ["dist"],
+  "ext": "js",
+  "exec": "node --trace-uncaught dist/app.js",
+  "verbose": true
+}

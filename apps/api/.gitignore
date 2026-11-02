@@ -1,0 +1,24 @@
+
+.env
+test.env
+/node_modules
+/dist
+# src/config/s3Config.ts
+#/prisma/migrations/
+
+# ToneTag token cache
+.tonetag-token-cache.json
+
+# Logs
+/logs
+*.log
+
+# Temporary files for email attachments
+/temp
+.env.zip
+.claude
+.agents
+.windsurf
+
+
+/src/generated/prisma
