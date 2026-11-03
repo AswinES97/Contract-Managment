@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
-import { StatusCode } from "../constants/statusCodes.js";
+import StatusCode from "../constants/statusCodes.js";
 import CustomError from "../utils/customError.js";
 import { env } from "../config/envConfig.js";
 import { logErr } from "../config/logger.js";
-
 
 const logError = (err: any, req: Request) => {
   const isDevelopment = env.ENV_TYPE === "development";
@@ -23,9 +22,7 @@ const logError = (err: any, req: Request) => {
 };
 
 const errorHandler: ErrorRequestHandler = (
-  err:
-    | CustomError
-    | Error,
+  err: CustomError | Error,
   req: Request,
   res: Response,
   next: NextFunction,

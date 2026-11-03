@@ -1,0 +1,34 @@
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Customer {
+  id             String         @id @default(uuid()) @db.Uuid
+  name           String
+  billingAddress String?        @map("billing_address")
+  notes          String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  status         CustomerStatus // @default(ACTIVE)
+  contacts       Contact[]
+  // contracts      Contract[]
+  cloudAccounts  CloudAccount[]
+
+  @@index([status])
+  @@index([name])
+  @@map("customers")
+}
+
+model OnboardingStep {
+  id          String    @id @default(uuid()) @db.Uuid
+  customer_id String    @map("customer_id") @db.Uuid
+  step        Int
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
+  // customer Customer @relation(fields: [customer_id], references: [id])
+
+  @@unique([customer_id, step])
+  @@index([customer_id])
+  @@map("onboarding_steps")
+}

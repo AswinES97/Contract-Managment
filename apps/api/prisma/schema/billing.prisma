@@ -1,0 +1,99 @@
+// todo: cross check with MVP 
+
+// enum InvoiceState {
+//     PENDING
+//     RAISED
+//     COMPLETED
+// }
+
+// enum BillLineSourceType {
+//     FIXED_SERVICE
+//     CLOUD_USAGE
+// }
+
+// model Bill {
+//     id          String   @id @default(uuid()) @db.Uuid
+//     contractId  String   @map("contract_id") @db.Uuid
+//     periodStart DateTime @map("period_start") @db.Date
+//     periodEnd   DateTime @map("period_end") @db.Date
+//     totalAmount Decimal  @map("total_amount") @db.Decimal(14, 2)
+//     currency    String   @default("AED") @db.VarChar(3)
+//     createdAt   DateTime @default(now()) @map("created_at")
+
+//     lineItems     BillLineItem[]
+//     invoiceStatus InvoiceStatus?
+//     contract      Contract       @relation(fields: [contractId], references: [id], onDelete: Restrict)
+
+//     @@unique([contractId, periodStart, periodEnd])
+//     @@index([contractId])
+//     @@index([periodStart, periodEnd])
+//     @@index([contractId, periodStart, periodEnd])
+//     @@map("bills")
+// }
+
+// model BillLineItem {
+//     id     String @id @default(uuid()) @db.Uuid
+//     billId String @map("bill_id") @db.Uuid
+//     description String
+//     sourceType BillLineSourceType @map("source_type")
+
+//     quantity   Decimal @default(1) @db.Decimal(12, 4)
+//     unitAmount Decimal @map("unit_amount") @db.Decimal(14, 2)
+
+//     discountPercentage Decimal @default(0) @map("discount_percentage") @db.Decimal(5, 2)
+
+//     finalAmount Decimal @map("final_amount") @db.Decimal(14, 2)
+
+//     createdAt DateTime @default(now()) @map("created_at")
+
+//     // bill Bill @relation(
+//     // fields: [billId],
+//     // references: [id],
+//     // onDelete Cascade
+//     // )
+
+//     @@index([billId])
+//     @@map("bill_line_items")
+// }
+
+// model InvoiceStatus {
+//     id     String @id @default(uuid()) @db.Uuid
+//     billId String @unique @map("bill_id") @db.Uuid
+
+//     status InvoiceState
+
+//     invoiceNumber String?   @map("invoice_number")
+//     invoiceDate   DateTime? @map("invoice_date") @db.Date
+
+//     checkedAt DateTime @default(now()) @map("checked_at")
+
+//     // bill Bill @relation(
+//     // fields: [billId],
+//     // references: [id],
+//     // onDelete Cascade
+//     // )
+
+//     @@index([status])
+//     @@index([checkedAt])
+//     @@map("invoice_status")
+// }
+
+// model BillingFrequency {
+//     id       String  @id @default(uuid()) @db.Uuid
+//     name     String  @unique
+//     isActive Boolean @default(true) @map("is_active")
+
+//     contracts Contract[]
+
+//     @@map("billing_frequencies")
+// }
+
+// model BillingTiming {
+//     id       String  @id @default(uuid()) @db.Uuid
+//     name     String  @unique
+//     isActive Boolean @default(true) @map("is_active")
+
+//     contracts Contract[]
+
+//     @@map("billing_timings")
+// }

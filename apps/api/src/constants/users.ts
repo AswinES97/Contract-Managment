@@ -1,7 +1,7 @@
-enum Users {
-  admin = "admin",
-  end_user = "end_user",
-  viewer = "viewer",
+enum UserRoles {
+  ADMIN = "ADMIN",
+  END_USER = "END_USER",
+  VIEWER = "VIEWER",
 }
 
-export default Users;
+export default UserRoles;

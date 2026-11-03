@@ -1,6 +1,6 @@
 interface IJwtTokenService {
-  createToken(user_id: string, role: string): Promise<string>;
-  verifyToken(token: string): Promise<{ user_id: string; role: string }>;
+  createToken(id: string, role: string): Promise<string>;
+  verifyToken(token: string): Promise<void>;
 }
 
 export default IJwtTokenService;

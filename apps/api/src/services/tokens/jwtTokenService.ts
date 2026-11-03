@@ -1,14 +1,14 @@
 import jwt from "jsonwebtoken";
 import { env } from "../../config/envConfig.js";
 import CustomError from "../../utils/customError.js";
-import { StatusCode } from "../../constants/statusCodes.js";
+import StatusCode from "../../constants/statusCodes.js";
 import IJwtTokenService from "../../interfaces/tokens/jwtTokenInterface.js";
 
 class JwtTokenService implements IJwtTokenService {
-  createToken = async (user_id: string, role: string): Promise<string> => {
+  createToken = async (id: string, role: string): Promise<string> => {
     try {
       let payload = {
-        user_id,
+        id,
         role,
       };
 
@@ -30,10 +30,10 @@ class JwtTokenService implements IJwtTokenService {
 
   verifyToken = async (
     token: string,
-  ): Promise<{ user_id: string; role: string }> => {
+  ): Promise<{ id: string; role: string }> => {
     try {
       const payload = jwt.verify(token, env.JWT_TOKEN_SECRET) as {
-        user_id: string;
+        id: string;
         role: string;
       };
       return payload;

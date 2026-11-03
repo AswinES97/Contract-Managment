@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/envConfig.js";
 import { Request, Response, NextFunction } from "express";
-import { StatusCode } from "../constants/statusCodes.js";
+import StatusCode from "../constants/statusCodes.js";
 import { log, logErr } from "../config/logger.js";
 import JwtTokenService from "../services/tokens/jwtTokenService.js";
 
@@ -28,9 +28,9 @@ export const verifyToken = async (
     return;
   }
 
-  const accessToken = authHeader.split(" ")[1];
+  const token = authHeader.split(" ")[1];
 
-  if (!accessToken) {
+  if (!token) {
     log("ACCESS TOKEN MISSING");
     res.status(StatusCode.UNAUTHORIZED).json({
       message: "Access token missing",
@@ -38,16 +38,16 @@ export const verifyToken = async (
     return;
   }
 
-  jwt.verify(accessToken, env.JWT_TOKEN_SECRET, async (err, payload) => {
+  jwt.verify(token, env.JWT_TOKEN_SECRET, async (err, payload) => {
     if (err) {
       res.status(StatusCode.UNAUTHORIZED).json({
         message: "Unauthorized!",
       });
       return;
     } else {
-      const payloadTyped = payload as { user_id: string; role: string };
-    // Todo: get user from db and check if user exists and is active 
-    // Todo: save in redis if needed
+      const payloadTyped = payload as { id: string; role: string };
+      // Todo: get user from db and check if user exists and is active
+      // Todo: save in redis if needed
       // req.authData = payload;
       next();
     }

@@ -24,4 +24,4 @@ enum StatusCode {
   GATEWAY_TIMEOUT = 504,
 }
 
-export { StatusCode };
+export default StatusCode;

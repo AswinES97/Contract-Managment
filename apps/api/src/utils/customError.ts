@@ -1,4 +1,4 @@
-import { StatusCode } from "../constants/statusCodes.js";
+import StatusCode from "../constants/statusCodes.js";
 
 class CustomError extends Error {
   public statusCode: number;
