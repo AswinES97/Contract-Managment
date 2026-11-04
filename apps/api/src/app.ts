@@ -5,11 +5,11 @@ import cookieParser from "cookie-parser";
 import morganLogger from "./config/morganConfig.js";
 import cors from "cors";
 import { env, validateEnvConfig } from "./config/envConfig.js";
-import errorHandler from "./middlewares/errorHandler.js";
 
 import allRoutes from "./routes/index.js";
 import { log, logErr } from "./config/logger.js";
 import { initPrismaConnection } from "./config/prismaConfig.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -19,11 +19,12 @@ app.use(
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
 
-      const allowedOrigins = [
-        "http://localhost:5173",
-      ];
+      const allowedOrigins = ["http://localhost:5173"];
 
-      if (allowedOrigins.includes(origin) || allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+      if (
+        allowedOrigins.includes(origin) ||
+        allowedOrigins.includes(origin.replace(/\/$/, ""))
+      ) {
         callback(null, true);
       } else {
         callback(null, false);
@@ -38,16 +39,20 @@ app.use(
       "x-access-token",
       "Accept",
       "X-Requested-With",
-      "x-admin-token"
+      "x-admin-token",
     ],
-    exposedHeaders: ["x-access-token", "x-refresh-token", "Content-Disposition"]
-  })
+    exposedHeaders: [
+      "x-access-token",
+      "x-refresh-token",
+      "Content-Disposition",
+    ],
+  }),
 );
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     crossOriginEmbedderPolicy: false,
-  })
+  }),
 );
 app.use(cookieParser());
 app.use(morganLogger);
@@ -72,6 +77,6 @@ app.use(errorHandler);
 
 const PORT = env.PORT;
 server.listen(PORT, () => {
-    log(`Server is running on port ${PORT}`);
-    log(`Environment: ${env.ENV_TYPE}`);
+  log(`Server is running on port ${PORT}`);
+  log(`Environment: ${env.ENV_TYPE}`);
 });

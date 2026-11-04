@@ -7,12 +7,12 @@ class AuthController {
   private authService: IAuthService;
   private jwtService: IJwtTokenService;
 
-  constructor(authService: IAuthService, jwtService: IJwtTokenService) {
-    this.authService = authService;
+  constructor(AuthService: IAuthService, jwtService: IJwtTokenService) {
+    this.authService = AuthService;
     this.jwtService = jwtService;
   }
 
-  async login(req: Request, res: Response, next: NextFunction) {
+  login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { email, password } = req.body;
 
@@ -24,14 +24,32 @@ class AuthController {
       }
 
       const userData = await this.authService.login(email, password);
-      //todo: token generation and response
+      const token = await this.jwtService.createToken(
+        userData.id,
+        userData.role,
+      );
 
-      res.status(StatusCode.OK).json({ message: "Login successful", userData });
+      const resData = {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+      };
+
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: true,
+        // sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      res
+        .status(StatusCode.OK)
+        .json({ message: "Login successful", data: resData });
       return;
     } catch (error) {
       next(error);
     }
-  }
+  };
 }
 
 export default AuthController;

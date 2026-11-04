@@ -13,12 +13,13 @@ test.env
 /logs
 *.log
 
-# Temporary files for email attachments
 /temp
 .env.zip
 .claude
 .agents
 .windsurf
+.postman
+/postman
 
 
 /src/generated/prisma

@@ -33,7 +33,7 @@ export const verifyToken = async (
   if (!token) {
     log("ACCESS TOKEN MISSING");
     res.status(StatusCode.UNAUTHORIZED).json({
-      message: "Access token missing",
+      message: "Unauthorized",
     });
     return;
   }

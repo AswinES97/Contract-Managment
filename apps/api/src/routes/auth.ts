@@ -17,5 +17,6 @@ const authController = new AuthController(authService, jwtService);
 const authRouter = Router();
 
 authRouter.post("/login", authController.login);
+// authRouter.post("/logout", authController.logout);
 
 export default authRouter;

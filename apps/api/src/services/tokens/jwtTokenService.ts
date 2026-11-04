@@ -1,8 +1,10 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../../config/envConfig.js";
 import CustomError from "../../utils/customError.js";
 import StatusCode from "../../constants/statusCodes.js";
 import IJwtTokenService from "../../interfaces/tokens/jwtTokenInterface.js";
+import { NextFunction, Request, Response } from "express";
+import { logErr } from "../../config/logger.js";
 
 class JwtTokenService implements IJwtTokenService {
   createToken = async (id: string, role: string): Promise<string> => {
@@ -28,15 +30,32 @@ class JwtTokenService implements IJwtTokenService {
     }
   };
 
-  verifyToken = async (
-    token: string,
-  ): Promise<{ id: string; role: string }> => {
+  verifyToken = (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): undefined => {
     try {
-      const payload = jwt.verify(token, env.JWT_TOKEN_SECRET) as {
-        id: string;
-        role: string;
+      const authHeader = req.headers["authorization"] as string;
+      if (!authHeader) {
+        logErr("AUTH HEADER TOKEN MISSING");
+        res.status(StatusCode.UNAUTHORIZED).json({
+          message: "Token missing",
+        });
+        return;
+      }
+
+      const token = authHeader.split(" ")[1];
+      const payload = jwt.verify(token, env.JWT_TOKEN_SECRET) as JwtPayload;
+
+      const authData = {
+        id: payload.id,
+        role: payload.role,
       };
-      return payload;
+
+      req.authData = authData;
+
+      next();
     } catch (error) {
       throw new CustomError(
         "Invalid or expired token",

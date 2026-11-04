@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import { IAuthService } from "../interfaces/auth/serviceInterface.js";
 import { IUserService } from "../interfaces/user/serviceInterface.js";
 import { IUser } from "../interfaces/user/commonInterface.js";
-
 class AuthService implements IAuthService {
   private userService: IUserService;
 
@@ -10,14 +9,18 @@ class AuthService implements IAuthService {
     this.userService = userService;
   }
 
-  async login(email: string, password: string): Promise<IUser | null> {
+  async login(email: string, password: string): Promise<IUser> {
     const userData = await this.userService.getUserByEmail(email);
-    const hashedPassword = await bcrypt.hash(password, 10);
-    if (!userData || userData.password !== hashedPassword) {
+    const hashedPassword = await bcrypt.compare(
+      password,
+      userData?.password || "",
+    );
+    if (!hashedPassword || !userData) {
       throw new Error("Invalid email or password");
     }
-    return userData || null;
+    return userData;
   }
+
   async logout(): Promise<void> {}
 }
 
