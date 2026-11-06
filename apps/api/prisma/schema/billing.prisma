@@ -97,3 +97,490 @@
 
 //     @@map("billing_timings")
 // }
+
+
+//////////////////////////////////////////////////////////////
+
+
+
+
+// generator client {
+//   provider = "prisma-client"
+//   output   = "../generated/prisma"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+// }
+
+// // ======================================================
+// // ENUMS
+// // ======================================================
+
+// enum UserRole {
+//   ADMIN
+//   END_USER
+//   VIEWER
+// }
+
+// enum CustomerStatus {
+//   ACTIVE
+//   INACTIVE
+// }
+
+// enum ContractStatus {
+//   DRAFT
+//   ACTIVE
+//   EXPIRED
+//   TERMINATED
+// }
+
+// enum CloudProvider {
+//   AWS
+//   AZURE
+// }
+
+// enum InvoiceState {
+//   PENDING
+//   RAISED
+//   COMPLETED
+// }
+
+// enum BillLineSourceType {
+//   FIXED_SERVICE
+//   CLOUD_USAGE
+// }
+
+// // ======================================================
+// // USER
+// // ======================================================
+
+// model User {
+//   id           String   @id @default(uuid()) @db.Uuid
+//   email        String   @unique
+//   passwordHash String   @map("password_hash")
+//   role         UserRole
+//   isActive     Boolean  @default(true) @map("is_active")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   auditLogs AuditLog[]
+
+//   @@index([role])
+//   @@index([isActive])
+//   @@map("users")
+// }
+
+// // ======================================================
+// // CUSTOMER
+// // ======================================================
+
+// model Customer {
+//   id             String         @id @default(uuid()) @db.Uuid
+//   name           String
+//   status         CustomerStatus @default(ACTIVE)
+//   billingAddress String?        @map("billing_address")
+//   notes          String?
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   contacts      Contact[]
+//   contracts     Contract[]
+//   cloudAccounts CloudAccount[]
+
+//   @@index([status])
+//   @@index([name])
+//   @@map("customers")
+// }
+
+// // ======================================================
+// // CONTACT
+// // ======================================================
+
+// model Contact {
+//   id         String  @id @default(uuid()) @db.Uuid
+//   customerId String  @map("customer_id") @db.Uuid
+//   name       String
+//   role       String?
+//   email      String?
+//   phone      String?
+//   isPrimary  Boolean @default(false) @map("is_primary")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   customer Customer @relation(
+//     fields: [customerId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   @@index([customerId])
+//   @@index([customerId, isPrimary])
+//   @@map("contacts")
+// }
+
+// // ======================================================
+// // BILLING FREQUENCY
+// // ======================================================
+
+// model BillingFrequency {
+//   id       String  @id @default(uuid()) @db.Uuid
+//   name     String  @unique
+//   isActive Boolean @default(true) @map("is_active")
+
+//   contracts Contract[]
+
+//   @@map("billing_frequencies")
+// }
+
+// // ======================================================
+// // BILLING TIMING
+// // ======================================================
+
+// model BillingTiming {
+//   id       String  @id @default(uuid()) @db.Uuid
+//   name     String  @unique
+//   isActive Boolean @default(true) @map("is_active")
+
+//   contracts Contract[]
+
+//   @@map("billing_timings")
+// }
+
+// // ======================================================
+// // CONTRACT
+// // ======================================================
+
+// model Contract {
+//   id                 String         @id @default(uuid()) @db.Uuid
+//   customerId         String         @map("customer_id") @db.Uuid
+//   scopeDescription   String?        @map("scope_description")
+//   startDate          DateTime       @map("start_date") @db.Date
+//   endDate            DateTime       @map("end_date") @db.Date
+//   status             ContractStatus @default(DRAFT)
+
+//   billingFrequencyId String @map("billing_frequency_id") @db.Uuid
+//   billingTimingId    String @map("billing_timing_id") @db.Uuid
+
+//   onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   customer Customer @relation(
+//     fields: [customerId],
+//     references: [id],
+//     onDelete: Restrict
+//   )
+
+//   billingFrequency BillingFrequency @relation(
+//     fields: [billingFrequencyId],
+//     references: [id],
+//     onDelete: Restrict
+//   )
+
+//   billingTiming BillingTiming @relation(
+//     fields: [billingTimingId],
+//     references: [id],
+//     onDelete: Restrict
+//   )
+
+//   services        ContractService[]
+//   bills           Bill[]
+//   onboardingSteps OnboardingStep[]
+
+//   @@index([customerId])
+//   @@index([status])
+//   @@index([startDate, endDate])
+//   @@index([customerId, status])
+
+//   @@map("contracts")
+// }
+
+// // ======================================================
+// // SERVICE TYPE
+// // ======================================================
+
+// model ServiceType {
+//   id       String  @id @default(uuid()) @db.Uuid
+//   name     String  @unique
+//   isActive Boolean @default(true) @map("is_active")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   contractServices ContractService[]
+
+//   @@index([isActive])
+//   @@map("service_types")
+// }
+
+// // ======================================================
+// // CONTRACT SERVICE
+// // ======================================================
+
+// model ContractService {
+//   id            String   @id @default(uuid()) @db.Uuid
+//   contractId    String   @map("contract_id") @db.Uuid
+//   serviceTypeId String   @map("service_type_id") @db.Uuid
+
+//   monthlyAmount Decimal? @map("monthly_amount") @db.Decimal(14, 2)
+
+//   startDate DateTime @map("start_date") @db.Date
+//   endDate   DateTime? @map("end_date") @db.Date
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   contract Contract @relation(
+//     fields: [contractId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   serviceType ServiceType @relation(
+//     fields: [serviceTypeId],
+//     references: [id],
+//     onDelete: Restrict
+//   )
+
+//   discounts ServiceDiscount[]
+
+//   @@index([contractId])
+//   @@index([serviceTypeId])
+//   @@index([contractId, startDate, endDate])
+
+//   @@map("contract_services")
+// }
+
+// // ======================================================
+// // SERVICE DISCOUNT HISTORY
+// // ======================================================
+
+// model ServiceDiscount {
+//   id                String  @id @default(uuid()) @db.Uuid
+//   contractServiceId String  @map("contract_service_id") @db.Uuid
+//   percentage        Decimal @db.Decimal(5, 2)
+
+//   effectiveFrom DateTime  @map("effective_from") @db.Date
+//   effectiveTo   DateTime? @map("effective_to") @db.Date
+
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   contractService ContractService @relation(
+//     fields: [contractServiceId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   @@index([contractServiceId])
+//   @@index([contractServiceId, effectiveFrom, effectiveTo])
+
+//   @@map("service_discounts")
+// }
+
+// // ======================================================
+// // CLOUD ACCOUNT
+// // ======================================================
+
+// model CloudAccount {
+//   id                String        @id @default(uuid()) @db.Uuid
+//   customerId        String        @map("customer_id") @db.Uuid
+//   provider          CloudProvider
+//   externalAccountId String        @map("external_account_id")
+//   isActive          Boolean       @default(true) @map("is_active")
+
+//   createdAt DateTime @default(now()) @map("created_at")
+//   updatedAt DateTime @updatedAt @map("updated_at")
+
+//   customer Customer @relation(
+//     fields: [customerId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   usage CloudUsageMonthly[]
+
+//   @@unique([provider, externalAccountId])
+//   @@index([customerId])
+//   @@index([customerId, isActive])
+
+//   @@map("cloud_accounts")
+// }
+
+// // ======================================================
+// // MONTHLY CLOUD USAGE
+// // ======================================================
+
+// model CloudUsageMonthly {
+//   id             String   @id @default(uuid()) @db.Uuid
+//   cloudAccountId String   @map("cloud_account_id") @db.Uuid
+//   billingMonth   DateTime @map("billing_month") @db.Date
+
+//   amount   Decimal @db.Decimal(14, 2)
+//   currency String  @default("AED") @db.VarChar(3)
+
+//   fetchedAt DateTime @default(now()) @map("fetched_at")
+
+//   cloudAccount CloudAccount @relation(
+//     fields: [cloudAccountId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   @@unique([cloudAccountId, billingMonth])
+//   @@index([billingMonth])
+//   @@index([cloudAccountId, billingMonth])
+
+//   @@map("cloud_usage_monthly")
+// }
+
+// // ======================================================
+// // BILL
+// // ======================================================
+
+// model Bill {
+//   id         String   @id @default(uuid()) @db.Uuid
+//   contractId String   @map("contract_id") @db.Uuid
+
+//   periodStart DateTime @map("period_start") @db.Date
+//   periodEnd   DateTime @map("period_end") @db.Date
+
+//   totalAmount Decimal @map("total_amount") @db.Decimal(14, 2)
+//   currency    String  @default("AED") @db.VarChar(3)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   contract Contract @relation(
+//     fields: [contractId],
+//     references: [id],
+//     onDelete: Restrict
+//   )
+
+//   lineItems     BillLineItem[]
+//   invoiceStatus InvoiceStatus?
+
+//   @@unique([contractId, periodStart, periodEnd])
+
+//   @@index([contractId])
+//   @@index([periodStart, periodEnd])
+//   @@index([contractId, periodStart, periodEnd])
+
+//   @@map("bills")
+// }
+
+// // ======================================================
+// // BILL LINE ITEM
+// // ======================================================
+
+// model BillLineItem {
+//   id     String @id @default(uuid()) @db.Uuid
+//   billId String @map("bill_id") @db.Uuid
+
+//   description String
+
+//   sourceType BillLineSourceType @map("source_type")
+
+//   quantity   Decimal @default(1) @db.Decimal(12, 4)
+//   unitAmount Decimal @map("unit_amount") @db.Decimal(14, 2)
+
+//   discountPercentage Decimal @default(0) @map("discount_percentage") @db.Decimal(5, 2)
+
+//   finalAmount Decimal @map("final_amount") @db.Decimal(14, 2)
+
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   bill Bill @relation(
+//     fields: [billId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   @@index([billId])
+
+//   @@map("bill_line_items")
+// }
+
+// // ======================================================
+// // INVOICE STATUS
+// // ======================================================
+
+// model InvoiceStatus {
+//   id     String @id @default(uuid()) @db.Uuid
+//   billId String @unique @map("bill_id") @db.Uuid
+
+//   status InvoiceState
+
+//   invoiceNumber String?   @map("invoice_number")
+//   invoiceDate   DateTime? @map("invoice_date") @db.Date
+
+//   checkedAt DateTime @default(now()) @map("checked_at")
+
+//   bill Bill @relation(
+//     fields: [billId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   @@index([status])
+//   @@index([checkedAt])
+
+//   @@map("invoice_status")
+// }
+
+// // ======================================================
+// // ONBOARDING
+// // ======================================================
+
+// model OnboardingStep {
+//   id         String  @id @default(uuid()) @db.Uuid
+//   contractId String  @map("contract_id") @db.Uuid
+//   step       Int
+//   completed  Boolean @default(false)
+
+//   completedAt DateTime? @map("completed_at")
+
+//   contract Contract @relation(
+//     fields: [contractId],
+//     references: [id],
+//     onDelete: Cascade
+//   )
+
+//   @@unique([contractId, step])
+//   @@index([contractId])
+
+//   @@map("onboarding_steps")
+// }
+
+// // ======================================================
+// // AUDIT LOG
+// // ======================================================
+
+// model AuditLog {
+//   id String @id @default(uuid()) @db.Uuid
+
+//   userId String @map("user_id") @db.Uuid
+
+//   entityType String @map("entity_type")
+//   entityId   String @map("entity_id")
+
+//   action  String
+//   changes Json?
+
+//   createdAt DateTime @default(now()) @map("created_at")
+
+//   user User @relation(
+//     fields: [userId],
+//     references: [id],
+//     onDelete: Restrict
+//   )
+
+//   @@index([userId])
+//   @@index([entityType, entityId])
+//   @@index([createdAt])
+
+//   @@map("audit_logs")
+// }

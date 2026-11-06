@@ -1,4 +1,4 @@
-// todo: cross check with MVP 
+// // todo: cross check with MVP 
 
 // enum ContractStatus {
 //     DRAFT
@@ -31,9 +31,7 @@
 //     // onDelete Restrict
 //     // )
 
-//     billingTiming BillingTiming @relation(
-//     fields: [billingTimingId],
-//     references: [id], onDelete Restrict)
+//     billingTiming BillingTiming @relation(fields: [billingTimingId], references: [id], onDelete: Restrict)
 
 //     services        ContractService[]
 //     bills           Bill[]

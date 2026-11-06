@@ -26,7 +26,7 @@ class UserRepositories implements IUserRepository {
         password,
         role,
         isActive,
-        name: !name ? name : null,
+        name,
       },
       omit: {
         password: true,
