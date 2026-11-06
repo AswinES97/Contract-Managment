@@ -1,9 +1,11 @@
 import { Router } from "express";
-import authRouter from "./auth.js";
-import userRouter from "./user.js";
-import customerRouter from "./customer.js";
+import authRouter from "./auth.routes.js";
+import userRouter from "./user.routes.js";
+import customerRouter from "./customer.routes.js";
 
 const router = Router();
+
+// Todo: check on the returned errors, sometimes returning primsa error
 
 router.use("/auth", authRouter);
 router.use("/users", userRouter);

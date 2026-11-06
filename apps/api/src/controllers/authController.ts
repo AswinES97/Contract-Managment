@@ -35,16 +35,9 @@ class AuthController {
         role: userData.role,
       };
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        // sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
       res
         .status(StatusCode.OK)
-        .json({ message: "Login successful", data: resData });
+        .json({ message: "Login successful", data: resData, token });
       return;
     } catch (error) {
       next(error);

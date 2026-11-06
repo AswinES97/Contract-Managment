@@ -26,7 +26,7 @@ class UserRepositories implements IUserRepository {
         password,
         role,
         isActive,
-        name: !name ? name : null,
+        name,
       },
       omit: {
         password: true,
@@ -44,9 +44,6 @@ class UserRepositories implements IUserRepository {
   getAllUsers = async (): Promise<IUser[] | undefined> => {
     try {
       const users = await this.prisma.user.findMany({
-        where: {
-          role: { not: "ADMIN" },
-        },
         omit: {
           password: true,
         },
