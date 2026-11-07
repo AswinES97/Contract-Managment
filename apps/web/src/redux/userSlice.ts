@@ -1,94 +1,84 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { RoleType } from "@/types/roles";
-
-export interface IUser {
-  id: string;
-  name?: string;
-  email: string;
-  role: RoleType;
+import type { PlatformUser } from "@/types/contractManagement";
+import { fetchUsers, updateUserDetails, createUser } from "./userThunk";
+export interface IUserState {
+  users: PlatformUser[];
+  loading: boolean;
+  error: string | null;
+  updateLoading: boolean;
 }
-
-export interface IAuthState {
-  user: IUser | null;
-  isAuthenticated: boolean;
-  token: string | null;
-}
-
-const getInitialAuthState = (): IAuthState => {
-  try {
-    const raw = localStorage.getItem("auth");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.token && parsed?.user) {
-        return {
-          user: parsed.user,
-          token: parsed.token,
-          isAuthenticated: true,
-        };
-      }
-    }
-  } catch (err) {
-    console.error("Failed to parse auth from localStorage", err);
-  }
-  return {
-    user: null,
-    isAuthenticated: false,
-    token: null,
-  };
+const initialState: IUserState = {
+  users: [],
+  loading: false,
+  error: null,
+  updateLoading: false,
 };
-
-const initialState: IAuthState = getInitialAuthState();
-
-const authSlice = createSlice({
-  name: "auth",
+const userSlice = createSlice({
+  name: "user",
   initialState,
   reducers: {
-    login(
-      state,
-      action: PayloadAction<{
-        user: IUser;
-        token: string;
-      }>,
-    ) {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
-      state.isAuthenticated = true;
-
-      localStorage.setItem(
-        "auth",
-        JSON.stringify({
-          user: state.user,
-          token: state.token,
-        }),
-      );
+    setUsers(state, action: PayloadAction<PlatformUser[]>) {
+      state.users = action.payload;
     },
-    logout(state) {
-      state.user = null;
-      state.isAuthenticated = false;
-      state.token = null;
-      localStorage.removeItem("auth");
-    },
-    setToken(state, action: PayloadAction<string>) {
-      state.token = action.payload;
-      const raw = localStorage.getItem("auth");
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          parsed.token = action.payload;
-          localStorage.setItem("auth", JSON.stringify(parsed));
-        } catch {
-          // ignore
-        }
-      }
-    },
-    rehydrate(state) {
-      const fresh = getInitialAuthState();
-      state.user = fresh.user;
-      state.token = fresh.token;
-      state.isAuthenticated = fresh.isAuthenticated;
+    clearUserError(state) {
+      state.error = null;
     },
   },
-});
+  extraReducers: (builder) => {
+    // fetchUsers
+    builder
+      .addCase(fetchUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload ?? "Failed to fetch users";
+      });
+    // updateUserDetails
+    builder
+      .addCase(updateUserDetails.pending, (state) => {
+        state.updateLoading = true;
+      })
+      .addCase(updateUserDetails.fulfilled, (state, action) => {
+        state.updateLoading = false;
+        const { id, role, isActive, name, email } = action.payload;
+        state.users = state.users.map((u) => {
+          if (u.id === id) {
+            return {
+              ...u,
+              ...(role !== undefined && { role }),
+              ...(isActive !== undefined && { isActive }),
+              ...(name !== undefined && { name }),
+              ...(email !== undefined && { email }),
+            };
+          }
+          return u;
+        });
+      })
+      .addCase(updateUserDetails.rejected, (state, action) => {
+        state.updateLoading = false;
+        state.error = action.payload ?? "Failed to update user";
+      });
 
-export const { login, logout, setToken, rehydrate } = authSlice.actions;
-export default authSlice.reducer;
+    // createUser
+    builder
+      .addCase(createUser.pending, (state) => {
+        state.updateLoading = true;
+      })
+      .addCase(createUser.fulfilled, (state, action) => {
+        state.updateLoading = false;
+        state.users = [action.payload, ...state.users];
+      })
+      .addCase(createUser.rejected, (state, action) => {
+        state.updateLoading = false;
+        state.error = action.payload ?? "Failed to create user";
+      });
+  },
+});
+export const { setUsers, clearUserError } = userSlice.actions;
+export default userSlice.reducer;
