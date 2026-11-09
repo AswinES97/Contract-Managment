@@ -3,3 +3,4 @@ Notes:
 - All the req/res validations will be in controllers.
 - And everything inbetween will be in services.
 - There will be interfaces between all layers, making the three decoupled as possible.
+
