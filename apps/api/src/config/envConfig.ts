@@ -35,23 +35,22 @@ export const env = {
   ENV_TYPE: process.env.NODE_ENV || "development",
   JWT_TOKEN_SECRET: process.env.JWT_TOKEN_SECRET || "",
   DATABASE_URL: process.env.DATABASE_URL || "",
-//   REDIS_HOST: process.env.REDIS_HOST || "localhost",
-//   REDIS_PORT: process.env.REDIS_PORT || "6379",
-  };
+  CRON: process.env.CRON || "",
+  //   REDIS_HOST: process.env.REDIS_HOST || "localhost",
+  //   REDIS_PORT: process.env.REDIS_PORT || "6379",
+};
 
 export const envKeys = {
   PORT_KEY: process.env.PORT_KEY || "",
   JWT_TOKEN_KEY: process.env.JWT_TOKEN_KEY || "",
   DATABASE_URL: process.env.DATABASE_URL || "",
-//   REDIS_KEY: process.env.REDIS_KEY || "",
+  //   REDIS_KEY: process.env.REDIS_KEY || "",
 };
 
 export const validateEnvConfig = (): void => {
   const missingVars: string[] = [];
 
-  const keysWithDefaults = new Set([
-    "ENV_TYPE", 
-  ]);
+  const keysWithDefaults = new Set(["ENV_TYPE", "CRON"]);
 
   for (const [key, value] of Object.entries(env)) {
     if (keysWithDefaults.has(key)) {
@@ -79,8 +78,8 @@ export const validateEnvConfig = (): void => {
     if (missingVars.includes("JWT_TOKEN_SECRET")) {
       console.error(
         `❌ Critical: JWT_TOKEN_SECRET is missing/empty. This will break auth.\n` +
-        `   Loaded .env from: ${loadedFrom ?? "(default dotenv search)"}\n` +
-        `   CWD: ${process.cwd()}\n`
+          `   Loaded .env from: ${loadedFrom ?? "(default dotenv search)"}\n` +
+          `   CWD: ${process.cwd()}\n`,
       );
 
       process.exit(1);

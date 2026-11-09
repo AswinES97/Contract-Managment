@@ -10,11 +10,6 @@ export interface IUserService {
   ): Promise<IUser>;
   getUserByEmail(email: string): Promise<IUser | null>;
   getAllUsers(): Promise<IUser[] | undefined>;
-  updateUser(
-    id: string,
-    email: string,
-    role: string,
-    isActive: boolean,
-    name?: string,
-  ): Promise<boolean | undefined>;
+  changeStatus(id: string, isActive: boolean): Promise<boolean | undefined>;
+  changeRole(id: string, role: string): Promise<boolean | undefined>;
 }

@@ -1,7 +1,6 @@
 import { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import {
   IContactRecord,
-  // IContactUpdate,
   IContactWrite,
   ICreateCustomerInput,
   ICustomerListFilter,
@@ -9,22 +8,24 @@ import {
   ICustomerRecord,
   CustomerStatus,
   IUpdateCustomerInput,
-  StoredCustomer,
-  IOnboardingSteps,
 } from "../interfaces/customer/commonInterface.js";
 import { ICustomerRepository } from "../interfaces/customer/repositoryInterface.js";
 
-// function toCustomer(customer: StoredCustomer): ICustomerRecord {
-//   return {
-//     id: customer.id,
-//     name: customer.name,
-//     billingAddress: customer.billingAddress,
-//     notes: customer.notes,
-//     status: customer.status,
-//     createdAt: customer.createdAt.toISOString(),
-//     updatedAt: customer.updatedAt.toISOString(),
-//   };
-// }
+const customerInclude = {
+  contacts: {
+    orderBy: [{ isPrimary: "desc" as const }, { createdAt: "asc" as const }],
+  },
+  cloudAccounts: {
+    select: {
+      id: true,
+      provider: true,
+      externalAccountId: true,
+    },
+    orderBy: {
+      createdAt: "desc" as const,
+    },
+  },
+};
 
 export class CustomerRepositories implements ICustomerRepository {
   private prisma: PrismaClient;
@@ -33,63 +34,166 @@ export class CustomerRepositories implements ICustomerRepository {
     this.prisma = prisma;
   }
 
+  private formatCustomer = (customer: {
+    id: string;
+    name: string;
+    billingAddress: string | null;
+    notes: string | null;
+    status: CustomerStatus;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    contacts?: Array<{
+      id: string;
+      customerId?: string;
+      name: string;
+      role?: string | null;
+      email?: string | null;
+      phone?: string | null;
+      isPrimary?: boolean;
+    }>;
+    cloudAccounts?: Array<{
+      id: string;
+      provider: string;
+      externalAccountId: string;
+    }>;
+  }): ICustomerRecord => {
+    return {
+      id: customer.id,
+      name: customer.name,
+      billingAddress: customer.billingAddress,
+      notes: customer.notes,
+      status: customer.status,
+      createdAt:
+        customer.createdAt instanceof Date
+          ? customer.createdAt.toISOString()
+          : String(customer.createdAt),
+      updatedAt:
+        customer.updatedAt instanceof Date
+          ? customer.updatedAt.toISOString()
+          : String(customer.updatedAt),
+      contacts: (customer.contacts || []).map((ct) => ({
+        id: ct.id,
+        customerId: ct.customerId || customer.id,
+        name: ct.name,
+        role: ct.role || "",
+        email: ct.email ?? null,
+        phone: ct.phone ?? null,
+        isPrimary: Boolean(ct.isPrimary),
+      })),
+      cloudAccounts: (customer.cloudAccounts || []).map((ca) => ({
+        id: ca.id,
+        provider: ca.provider,
+        externalAccountId: ca.externalAccountId,
+      })),
+    };
+  };
+
   async findById(id: string): Promise<ICustomerRecord | null> {
-    const customer: unknown = this.prisma.customer.findUnique({
-      where: {
-        id,
-      },
-      include: {
-        contacts: {
-          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
-          omit: { customerId: true },
-        },
-
-        cloudAccounts: {
-          select: {
-            id: true,
-            // customerId: true,
-            provider: true,
-            externalAccountId: true,
-            isActive: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-
-        onboardingSteps: {
-          orderBy: {
-            step: "asc",
-          },
-        },
-      },
+    const customer = await this.prisma.customer.findUnique({
+      where: { id },
+      include: customerInclude,
     });
 
-    return customer as ICustomerRecord;
+    if (!customer) return null;
+    return this.formatCustomer(customer);
+  }
+
+  async getAll(filter?: ICustomerListFilter): Promise<ICustomerRecord[]> {
+    const customers = await this.prisma.customer.findMany({
+      where: {
+        ...(filter?.status ? { status: filter.status } : {}),
+        ...(filter?.name
+          ? { name: { contains: filter.name, mode: "insensitive" } }
+          : {}),
+      },
+      include: customerInclude,
+      orderBy: { createdAt: "desc" },
+    });
+
+    return customers.map((c) => this.formatCustomer(c));
   }
 
   async create(input: ICreateCustomerInput): Promise<ICustomerRecord> {
-    const customer: unknown = await this.prisma.customer.create({
+    let hasPrimary = false;
+    const contactsData = (input.contacts || []).map((c) => {
+      const isPrimary = !hasPrimary && Boolean(c.isPrimary);
+      if (isPrimary) hasPrimary = true;
+      return {
+        name: c.name,
+        role: c.role || "",
+        email: c.email || null,
+        phone: c.phone || null,
+        isPrimary,
+      };
+    });
+    if (contactsData.length > 0 && !hasPrimary) {
+      contactsData[0].isPrimary = true;
+    }
+
+    const customer = await this.prisma.customer.create({
       data: {
         name: input.name,
-        billingAddress: input.billingAddress,
-        notes: input.notes,
-        status: input.status,
+        billingAddress: input.billingAddress || null,
+        notes: input.notes || null,
+        status: input.status || "ACTIVE",
+        contacts:
+          contactsData.length > 0 ? { create: contactsData } : undefined,
       },
-      select: {
-        id: true,
-        name: true,
-        billingAddress: true,
-        notes: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      include: customerInclude,
     });
 
-    return customer as ICustomerRecord;
+    return this.formatCustomer(customer);
+  }
+
+  async update(
+    id: string,
+    input: IUpdateCustomerInput,
+  ): Promise<ICustomerRecord | null> {
+    const existing = await this.prisma.customer.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!existing) return null;
+
+    return this.prisma.$transaction(async (tx) => {
+      if (input.contacts !== undefined) {
+        await tx.contact.deleteMany({ where: { customerId: id } });
+        let hasPrimary = false;
+        const contactsToCreate = input.contacts.map((c) => {
+          const isPrimary = !hasPrimary && Boolean(c.isPrimary);
+          if (isPrimary) hasPrimary = true;
+          return {
+            customerId: id,
+            name: c.name,
+            role: c.role || "",
+            email: c.email || null,
+            phone: c.phone || null,
+            isPrimary,
+          };
+        });
+        if (contactsToCreate.length > 0 && !hasPrimary) {
+          contactsToCreate[0].isPrimary = true;
+        }
+        if (contactsToCreate.length > 0) {
+          await tx.contact.createMany({ data: contactsToCreate });
+        }
+      }
+
+      const updated = await tx.customer.update({
+        where: { id },
+        data: {
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.billingAddress !== undefined
+            ? { billingAddress: input.billingAddress }
+            : {}),
+          ...(input.notes !== undefined ? { notes: input.notes } : {}),
+          ...(input.status !== undefined ? { status: input.status } : {}),
+        },
+        include: customerInclude,
+      });
+
+      return this.formatCustomer(updated);
+    });
   }
 
   async addContact(input: IContactWrite): Promise<CustomerMutationResult> {
@@ -110,7 +214,7 @@ export class CustomerRepositories implements ICustomerRepository {
         });
       }
 
-      const contact: unknown = await tx.contact.create({
+      const contact = await tx.contact.create({
         data: {
           customerId: input.customerId,
           name: input.name,
@@ -132,132 +236,18 @@ export class CustomerRepositories implements ICustomerRepository {
 
       return {
         status: "ok",
-        contact: contact as IContactRecord,
+        contact: {
+          id: contact.id,
+          customerId: contact.customerId,
+          name: contact.name,
+          role: contact.role || "",
+          email: contact.email,
+          phone: contact.phone,
+          isPrimary: contact.isPrimary,
+        },
       };
     });
   }
-
-  // async list(filter: CustomerListFilter): Promise<CustomerRecord[]> {
-  //   const customers = await this.prisma.customer.findMany({
-  //     where: {
-  //       ...(filter.status ? { status: filter.status } : {}),
-  //       ...(filter.name
-  //         ? { name: { contains: filter.name, mode: "insensitive" } }
-  //         : {}),
-  //     },
-  //     include: customerInclude,
-  //     orderBy: { name: "asc" },
-  //   });
-
-  //   return customers.map(toCustomer);
-  // }
-
-  // async update(
-  //   id: string,
-  //   input: UpdateCustomerInput,
-  // ): Promise<CustomerRecord | null> {
-  //   const existing = await this.prisma.customer.findUnique({
-  //     where: { id },
-  //     select: { id: true },
-  //   });
-  //   if (!existing) return null;
-
-  //   const customer = await this.prisma.customer.update({
-  //     where: { id },
-  //     data: {
-  //       ...(input.name !== undefined ? { name: input.name } : {}),
-  //       ...(input.billingAddress !== undefined
-  //         ? { billingAddress: input.billingAddress }
-  //         : {}),
-  //       ...(input.notes !== undefined ? { notes: input.notes } : {}),
-  //       ...(input.status !== undefined ? { status: input.status } : {}),
-  //     },
-  //     include: customerInclude,
-  //   });
-
-  //   return toCustomer(customer);
-  // }
-
-  // async updateContact(
-  //   customerId: string,
-  //   contactId: string,
-  //   input: ContactUpdate,
-  // ): Promise<CustomerMutationResult> {
-  //   return this.prisma.$transaction(async (tx) => {
-  //     if (!(await this.lockCustomer(tx, customerId))) {
-  //       return { status: "customer_not_found" };
-  //     }
-
-  //     const contact = await tx.contact.findFirst({
-  //       where: { id: contactId, customerId },
-  //       select: { id: true, isPrimary: true },
-  //     });
-  //     if (!contact) return { status: "contact_not_found" };
-
-  //     if (input.isPrimary === false && contact.isPrimary) {
-  //       const otherPrimary = await tx.contact.count({
-  //         where: { customerId, isPrimary: true, id: { not: contactId } },
-  //       });
-  //       if (otherPrimary === 0) return { status: "primary_required" };
-  //     }
-
-  //     if (input.isPrimary === true) {
-  //       await tx.contact.updateMany({
-  //         where: { customerId, isPrimary: true, id: { not: contactId } },
-  //         data: { isPrimary: false },
-  //       });
-  //     }
-
-  //     await tx.contact.update({
-  //       where: { id: contactId },
-  //       data: {
-  //         ...(input.name !== undefined ? { name: input.name } : {}),
-  //         ...(input.role !== undefined ? { role: input.role } : {}),
-  //         ...(input.email !== undefined ? { email: input.email } : {}),
-  //         ...(input.phone !== undefined ? { phone: input.phone } : {}),
-  //         ...(input.isPrimary !== undefined
-  //           ? { isPrimary: input.isPrimary }
-  //           : {}),
-  //       },
-  //     });
-
-  //     return {
-  //       status: "ok",
-  //       customer: await this.readCustomer(tx, customerId),
-  //     };
-  //   });
-  // }
-
-  // async removeContact(
-  //   customerId: string,
-  //   contactId: string,
-  // ): Promise<CustomerMutationResult> {
-  //   return this.prisma.$transaction(async (tx) => {
-  //     if (!(await this.lockCustomer(tx, customerId))) {
-  //       return { status: "customer_not_found" };
-  //     }
-
-  //     const contact = await tx.contact.findFirst({
-  //       where: { id: contactId, customerId },
-  //       select: { id: true, isPrimary: true },
-  //     });
-  //     if (!contact) return { status: "contact_not_found" };
-
-  //     const contactCount = await tx.contact.count({ where: { customerId } });
-  //     if (contactCount <= 1) return { status: "last_contact" };
-  //     if (contact.isPrimary) return { status: "primary_required" };
-
-  //     await tx.contact.delete({ where: { id: contactId } });
-
-  //     return {
-  //       status: "ok",
-  //       customer: await this.readCustomer(tx, customerId),
-  //     };
-  //   });
-  // }
-
-  // Serializes contact writes for one customer so two requests cannot both
-  // leave a customer with two primary contacts, or with none.
 
   private async lockCustomer(
     tx: Prisma.TransactionClient,
@@ -268,15 +258,4 @@ export class CustomerRepositories implements ICustomerRepository {
     `;
     return rows.length > 0;
   }
-
-  // private async readCustomer(
-  //   tx: Prisma.TransactionClient,
-  //   customerId: string,
-  // ): Promise<CustomerRecord> {
-  //   const customer = await tx.customer.findUniqueOrThrow({
-  //     where: { id: customerId },
-  //     include: customerInclude,
-  //   });
-  //   return toCustomer(customer);
-  // }
 }

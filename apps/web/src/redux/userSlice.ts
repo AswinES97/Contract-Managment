@@ -1,6 +1,11 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { PlatformUser } from "@/types/contractManagement";
-import { fetchUsers, updateUserDetails, createUser } from "./userThunk";
+import {
+  fetchUsers,
+  updateUserStatus,
+  createUser,
+  updateUserRole,
+} from "./userThunk";
 export interface IUserState {
   users: PlatformUser[];
   loading: boolean;
@@ -13,6 +18,7 @@ const initialState: IUserState = {
   error: null,
   updateLoading: false,
 };
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -39,30 +45,46 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload ?? "Failed to fetch users";
       });
-    // updateUserDetails
+    // updateUserStatus
     builder
-      .addCase(updateUserDetails.pending, (state) => {
+      .addCase(updateUserStatus.pending, (state) => {
         state.updateLoading = true;
+        state.error = null;
       })
-      .addCase(updateUserDetails.fulfilled, (state, action) => {
+      .addCase(updateUserStatus.fulfilled, (state, action) => {
         state.updateLoading = false;
-        const { id, role, isActive, name, email } = action.payload;
-        state.users = state.users.map((u) => {
-          if (u.id === id) {
-            return {
-              ...u,
-              ...(role !== undefined && { role }),
-              ...(isActive !== undefined && { isActive }),
-              ...(name !== undefined && { name }),
-              ...(email !== undefined && { email }),
-            };
-          }
-          return u;
-        });
+        if (!action.payload?.id) return;
+        const target = state.users.find((u) => u.id === action.payload.id);
+        if (target) {
+          if (action.payload.isActive !== undefined) target.isActive = action.payload.isActive;
+          if (action.payload.role !== undefined) target.role = action.payload.role;
+        }
       })
-      .addCase(updateUserDetails.rejected, (state, action) => {
+      .addCase(updateUserStatus.rejected, (state, action) => {
         state.updateLoading = false;
-        state.error = action.payload ?? "Failed to update user";
+        state.error = action.payload ?? "Failed to update user status";
+      });
+
+    // updateUserRole
+    builder
+      .addCase(updateUserRole.pending, (state) => {
+        state.updateLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUserRole.fulfilled, (state, action) => {
+        state.updateLoading = false;
+        if (!action.payload?.id) return;
+        const target = state.users.find((u) => u.id === action.payload.id);
+        if (target) {
+          if (action.payload.role !== undefined) target.role = action.payload.role;
+          if (action.payload.isActive !== undefined) target.isActive = action.payload.isActive;
+          if (action.payload.name !== undefined) target.name = action.payload.name;
+          if (action.payload.email !== undefined) target.email = action.payload.email;
+        }
+      })
+      .addCase(updateUserRole.rejected, (state, action) => {
+        state.updateLoading = false;
+        state.error = action.payload ?? "Failed to update user role";
       });
 
     // createUser

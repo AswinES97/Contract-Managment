@@ -8,9 +8,9 @@ export type CloudProvider = "AWS" | "AZURE";
 export type InvoiceState = "PENDING" | "RAISED" | "COMPLETED";
 
 export interface Contact {
-  id: string;
+  id?: string;
   name: string;
-  role: string;
+  role?: string;
   email: string;
   phone: string;
   isPrimary: boolean;
@@ -114,7 +114,10 @@ export interface Bill {
 export interface ServiceTypeItem {
   id: string;
   name: string;
+  monthlyPrice?: number;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PlatformUser {

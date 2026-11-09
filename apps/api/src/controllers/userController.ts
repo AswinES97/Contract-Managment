@@ -39,20 +39,30 @@ export class UserController {
     }
   };
 
-  updateUser = async (req: Request, res: Response, next: NextFunction) => {
+  changeStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, role, isActive, name } = req.body;
-      const { id } = req.authData as { id: string };
+      const { isActive } = req.body;
+      const id = req.params.id as string;
 
-      const updatedUserData = await this.userService.updateUser(
-        id,
-        email,
-        role,
-        isActive,
-        name,
-      );
+      const updatedUserData = await this.userService.changeStatus(id, isActive);
       if (updatedUserData) {
         res.status(StatusCode.OK).json({ message: "Updated Successfully" });
+        return;
+      }
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  changeRole = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { role } = req.body;
+      const id = req.params.id as string;
+
+      const updatedUserData = await this.userService.changeRole(id, role);
+      if (updatedUserData) {
+        res.status(StatusCode.OK).json({ message: "Updated Successfully" });
+        return;
       }
     } catch (err) {
       next(err);

@@ -3,6 +3,11 @@ enum CustomerStatus {
   INACTIVE
 }
 
+enum OnboardingStatus {
+  PENDING
+  COMPLETED
+}
+
 model Customer {
   id              String           @id @default(uuid()) @db.Uuid
   name            String
@@ -12,7 +17,7 @@ model Customer {
   updatedAt       DateTime         @updatedAt @map("updated_at")
   status          CustomerStatus   @default(INACTIVE)
   contacts        Contact[]
-  // contracts      Contract[]
+  contracts       Contract[]
   onboardingSteps OnboardingStep[]
   cloudAccounts   CloudAccount[]
 
@@ -22,14 +27,20 @@ model Customer {
 }
 
 model OnboardingStep {
-  id          String    @id @default(uuid()) @db.Uuid
-  customer_id String    @map("customer_id") @db.Uuid
+  id          String           @id @default(uuid()) @db.Uuid
+  customer_id String           @map("customer_id") @db.Uuid
+  contract_id String?          @map("contract_id") @db.Uuid
   step        Int
-  completed   Boolean   @default(false)
-  completedAt DateTime? @map("completed_at")
-  customer    Customer  @relation(fields: [customer_id], references: [id])
+  status      OnboardingStatus @default(PENDING)
+  completed   Boolean          @default(false)
+  completedAt DateTime?        @map("completed_at")
+  customer    Customer         @relation(fields: [customer_id], references: [id])
+  contract    Contract?        @relation(fields: [contract_id], references: [id], onDelete: SetNull)
 
-  @@unique([customer_id, step])
+  @@unique([customer_id, contract_id, step])
   @@index([customer_id])
+  @@index([contract_id])
+  @@index([status])
+  @@index([customer_id, status])
   @@map("onboarding_steps")
 }

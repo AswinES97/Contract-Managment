@@ -3,7 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { Roles, type RoleType } from "@/types/roles";
 import { toast } from "sonner";
 import type { AppDispatch, RootState } from "@/redux/store";
-import { fetchUsers, updateUserDetails, createUser } from "@/redux/userThunk";
+import {
+  fetchUsers,
+  updateUserRole,
+  createUser,
+  updateUserStatus,
+} from "@/redux/userThunk";
 
 export default function UserManagementPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -17,6 +22,8 @@ export default function UserManagementPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<RoleType>(Roles.END_USER);
 
+  //todo: get the current user and disable edit option
+  
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
@@ -32,9 +39,15 @@ export default function UserManagementPage() {
       return;
     }
 
+    if (!password.trim()) {
+      toast.error("Please enter password");
+      return;
+    }
+
     const action = await dispatch(
       createUser({
         name: name || email.split("@")[0],
+        password,
         email,
         role,
         isActive: true,
@@ -42,10 +55,11 @@ export default function UserManagementPage() {
     );
 
     if (createUser.fulfilled.match(action)) {
-      toast.success("New user invited and role assigned!");
+      toast.success("New user created!");
       setIsModalOpen(false);
       setName("");
       setEmail("");
+      setPassword("");
       setRole(Roles.END_USER);
     } else {
       toast.error(action.payload || "Failed to create user");
@@ -58,35 +72,43 @@ export default function UserManagementPage() {
     const nextStatus = !target.isActive;
 
     const action = await dispatch(
-      updateUserDetails({
+      updateUserStatus({
         id,
         isActive: nextStatus,
       }),
     );
 
-    if (updateUserDetails.fulfilled.match(action)) {
+    if (updateUserStatus.fulfilled.match(action)) {
       toast.success(
         nextStatus
           ? `User ${target.name} reactivated`
           : `User ${target.name} deactivated (retained in history)`,
       );
     } else {
-      toast.error(action.payload || "Failed to update user status");
+      const errorMsg =
+        typeof action.payload === "string"
+          ? action.payload
+          : "Failed to update user status";
+      toast.error(errorMsg);
     }
   };
 
   const handleChangeRole = async (id: string, newRole: RoleType) => {
     const action = await dispatch(
-      updateUserDetails({
+      updateUserRole({
         id,
         role: newRole,
       }),
     );
 
-    if (updateUserDetails.fulfilled.match(action)) {
+    if (updateUserRole.fulfilled.match(action)) {
       toast.success("Role updated successfully!");
     } else {
-      toast.error(action.payload || "Failed to update role");
+      const errorMsg =
+        typeof action.payload === "string"
+          ? action.payload
+          : "Failed to update role";
+      toast.error(errorMsg);
     }
   };
 
@@ -96,7 +118,7 @@ export default function UserManagementPage() {
       <div className="bg-white rounded-xl shadow-sm p-6 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-black">
+            <h2 className="text-2xl font-bold text-slate-900">
               User & Role Management
             </h2>
             <span className="text-xs px-3 py-0.5 rounded font-bold bg-blue-100 text-blue-700">
@@ -118,7 +140,7 @@ export default function UserManagementPage() {
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Platform Users ({loading ? "..." : users?.length})
+              Users ({loading ? "..." : users?.length})
             </h2>
             {loading && (
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
@@ -279,7 +301,7 @@ export default function UserManagementPage() {
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-200">
             <h3 className="text-lg font-bold text-slate-900 mb-4">
-              Add Platform User (FR1)
+              Add Users 
             </h3>
 
             <form onSubmit={handleAddUser} className="space-y-4 text-sm">

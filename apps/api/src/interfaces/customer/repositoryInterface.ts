@@ -11,20 +11,8 @@ import {
 
 export interface ICustomerRepository {
   findById(id: string): Promise<ICustomerRecord | null>;
+  getAll(filter?: ICustomerListFilter): Promise<ICustomerRecord[]>;
   create(input: ICreateCustomerInput): Promise<ICustomerRecord>;
+  update(id: string, input: IUpdateCustomerInput): Promise<ICustomerRecord | null>;
   addContact(input: IContactWrite): Promise<CustomerMutationResult>;
-  // list(filter: CustomerListFilter): Promise<CustomerRecord[]>;
-  // update(
-  //   id: string,
-  //   input: UpdateCustomerInput,
-  // ): Promise<CustomerRecord | null>;
-  // updateContact(
-  //   customerId: string,
-  //   contactId: string,
-  //   input: ContactUpdate,
-  // ): Promise<CustomerMutationResult>;
-  // removeContact(
-  //   customerId: string,
-  //   contactId: string,
-  // ): Promise<CustomerMutationResult>;
 }

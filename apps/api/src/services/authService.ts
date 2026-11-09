@@ -11,6 +11,11 @@ class AuthService implements IAuthService {
 
   async login(email: string, password: string): Promise<IUser> {
     const userData = await this.userService.getUserByEmail(email);
+
+    if(!userData?.isActive){
+      throw new Error("User is Inactive");
+    }
+
     const hashedPassword = await bcrypt.compare(
       password,
       userData?.password || "",

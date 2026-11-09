@@ -1,105 +1,74 @@
-// // todo: cross check with MVP 
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
 
-// enum ContractStatus {
-//     DRAFT
-//     ACTIVE
-//     EXPIRED
-//     TERMINATED
-// }
+model Contract {
+  id               String         @id @default(uuid()) @db.Uuid
+  customerId       String         @map("customer_id") @db.Uuid
+  scopeDescription String?        @map("scope_description")
+  startDate        DateTime?      @map("start_date") @db.Date
+  endDate          DateTime?      @map("end_date") @db.Date
+  status           ContractStatus @default(DRAFT)
 
-// model Contract {
-//     id               String         @id @default(uuid()) @db.Uuid
-//     customerId       String         @map("customer_id") @db.Uuid
-//     scopeDescription String?        @map("scope_description")
-//     startDate        DateTime       @map("start_date") @db.Date
-//     endDate          DateTime       @map("end_date") @db.Date
-//     status           ContractStatus @default(DRAFT)
+  billingFrequency String? @map("billing_frequency")
+  billingTiming    String? @map("billing_timing")
 
-//     billingFrequencyId String @map("billing_frequency_id") @db.Uuid
-//     billingTimingId    String @map("billing_timing_id") @db.Uuid
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
 
-//     onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-//     createdAt DateTime @default(now()) @map("created_at")
-//     updatedAt DateTime @updatedAt @map("updated_at")
+  customer        Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  services        ContractService[]
+  onboardingSteps OnboardingStep[]
+  bills           Bill[]
 
-//     customer Customer @relation(fields: [customerId], references: [id])
-//     // onDelete Restrict
-//     // )
+  @@index([customerId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([customerId, status])
+  @@map("contracts")
+}
 
-//     billingFrequency BillingFrequency @relation(fields: [billingFrequencyId], references: [id])
-//     // onDelete Restrict
-//     // )
+model ContractService {
+  id            String @id @default(uuid()) @db.Uuid
+  contractId    String @map("contract_id") @db.Uuid
+  serviceTypeId String @map("service_type_id") @db.Uuid
 
-//     billingTiming BillingTiming @relation(fields: [billingTimingId], references: [id], onDelete: Restrict)
+  monthlyAmount Int? @map("monthly_amount")
 
-//     services        ContractService[]
-//     bills           Bill[]
-//     onboardingSteps OnboardingStep[]
+  startDate DateTime  @map("start_date") @db.Date
+  endDate   DateTime? @map("end_date") @db.Date
 
-//     @@index([customerId])
-//     @@index([status])
-//     @@index([startDate, endDate])
-//     @@index([customerId, status])
-//     @@map("contracts")
-// }
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-// model ContractService {
-//     id            String @id @default(uuid()) @db.Uuid
-//     contractId    String @map("contract_id") @db.Uuid
-//     serviceTypeId String @map("service_type_id") @db.Uuid
+  contract    Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  serviceType ServiceType       @relation(fields: [serviceTypeId], references: [id], onDelete: Restrict)
+  discounts   ServiceDiscount[]
 
-//     monthlyAmount Decimal? @map("monthly_amount") @db.Decimal(14, 2)
+  @@index([contractId])
+  @@index([serviceTypeId])
+  @@index([contractId, startDate, endDate])
+  @@map("contract_services")
+}
 
-//     startDate DateTime  @map("start_date") @db.Date
-//     endDate   DateTime? @map("end_date") @db.Date
+model ServiceDiscount {
+  id                String @id @default(uuid()) @db.Uuid
+  contractServiceId String @map("contract_service_id") @db.Uuid
+  percentage        Int
 
-//     createdAt DateTime @default(now()) @map("created_at")
-//     updatedAt DateTime @updatedAt @map("updated_at")
+  effectiveFrom DateTime  @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
 
-//     contract Contract @relation(fields: [contractId], references: [id])
-//     // onDelete Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
 
-//     serviceType ServiceType @relation(fields: [serviceTypeId], references: [id])
-//     //   onDelete: Restrict)
+  contractService ContractService @relation(fields: [contractServiceId], references: [id], onDelete: Cascade)
 
-//     discounts ServiceDiscount[]
-
-//     @@index([contractId])
-//     @@index([serviceTypeId])
-//     @@index([contractId, startDate, endDate])
-//     @@map("contract_services")
-// }
-
-// model ServiceType {
-//     id       String  @id @default(uuid()) @db.Uuid
-//     name     String  @unique
-//     isActive Boolean @default(true) @map("is_active")
-
-//     createdAt DateTime @default(now()) @map("created_at")
-//     updatedAt DateTime @updatedAt @map("updated_at")
-
-//     contractServices ContractService[]
-
-//     @@index([isActive])
-//     @@map("service_types")
-// }
-
-// model ServiceDiscount {
-//     id                String  @id @default(uuid()) @db.Uuid
-//     contractServiceId String  @map("contract_service_id") @db.Uuid
-//     percentage        Decimal @db.Decimal(5, 2)
-
-//     effectiveFrom DateTime  @map("effective_from") @db.Date
-//     effectiveTo   DateTime? @map("effective_to") @db.Date
-
-//     createdAt DateTime @default(now()) @map("created_at")
-
-//     contractService ContractService @relation(fields: [contractServiceId], references: [id])
-//     //   onDelete: Cascade
-//     // )
-
-//     @@index([contractServiceId])
-//     @@index([contractServiceId, effectiveFrom, effectiveTo])
-//     @@map("service_discounts")
-// }
+  @@index([contractServiceId])
+  @@index([contractServiceId, effectiveFrom, effectiveTo])
+  @@map("service_discounts")
+}

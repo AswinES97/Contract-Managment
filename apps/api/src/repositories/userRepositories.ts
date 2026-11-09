@@ -54,12 +54,9 @@ class UserRepositories implements IUserRepository {
     }
   };
 
-  updateUser = async (
+  changeStatus = async (
     id: string,
-    email: string,
-    role: string,
     isActive: boolean,
-    name?: string,
   ): Promise<boolean | undefined> => {
     try {
       const updatedData = await this.prisma.user.update({
@@ -67,14 +64,31 @@ class UserRepositories implements IUserRepository {
           id: id,
         },
         data: {
-          email,
-          role,
           isActive,
-          name,
         },
       });
 
-      return updatedData.length > 0 ? true : false;
+      return Object.keys(updatedData).length > 0 ? true : false;
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
+  changeRole = async (
+    id: string,
+    role: string,
+  ): Promise<boolean | undefined> => {
+    try {
+      const updatedData = await this.prisma.user.update({
+        where: {
+          id: id,
+        },
+        data: {
+          role,
+        },
+      });
+
+      return Object.keys(updatedData).length > 0 ? true : false;
     } catch (error) {
       handleError(error);
     }

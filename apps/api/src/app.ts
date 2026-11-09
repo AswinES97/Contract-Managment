@@ -10,6 +10,7 @@ import allRoutes from "./routes/index.js";
 import { log, logErr } from "./config/logger.js";
 import { initPrismaConnection } from "./config/prismaConfig.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { initBillingCron } from "./jobs/billingCron.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -65,9 +66,9 @@ validateEnvConfig();
 (async () => {
   try {
     await initPrismaConnection();
-    // Todo: Check for initial Admin account exist or add a script to generate inital email and password
+    initBillingCron();
   } catch (error) {
-    logErr("❌ Failed to initialize admin system:", error);
+    logErr("❌ Failed to initialize server services:", error);
   }
 })();
 

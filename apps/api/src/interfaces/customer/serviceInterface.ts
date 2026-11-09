@@ -1,5 +1,11 @@
 import { IBaseCloudAccountBody } from "../cloud/commonInterface.js";
-import { IContactRecord, ICustomerRecord } from "./commonInterface.js";
+import {
+  IContactRecord,
+  ICustomerRecord,
+  ICreateCustomerInput,
+  IUpdateCustomerInput,
+  CustomerStatus,
+} from "./commonInterface.js";
 
 export interface CustomerListQuery {
   status?: unknown;
@@ -8,16 +14,10 @@ export interface CustomerListQuery {
 
 export interface ICustomerService {
   getCustomer(id: string): Promise<ICustomerRecord>;
-  createCustomer(body: unknown): Promise<ICustomerRecord>;
+  getAllCustomers(query?: CustomerListQuery): Promise<ICustomerRecord[]>;
+  createCustomer(data: ICreateCustomerInput): Promise<ICustomerRecord>;
+  updateCustomer(id: string, data: IUpdateCustomerInput): Promise<ICustomerRecord>;
+  updateCustomerStatus(id: string, status: CustomerStatus): Promise<ICustomerRecord>;
   addCloudDetails(body: unknown): Promise<IBaseCloudAccountBody>;
   addContact(body: unknown): Promise<IContactRecord>;
-  // listCustomers(query: CustomerListQuery): Promise<CustomerRecord[]>;
-  // updateCustomer(id: string, body: unknown): Promise<CustomerRecord>;
-  // deactivateCustomer(id: string): Promise<CustomerRecord>;
-  // updateContact(
-  //   customerId: string,
-  //   contactId: string,
-  //   body: unknown,
-  // ): Promise<CustomerRecord>;
-  // removeContact(customerId: string, contactId: string): Promise<CustomerRecord>;
 }

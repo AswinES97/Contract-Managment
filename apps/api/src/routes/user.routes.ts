@@ -14,8 +14,7 @@ const userService = new UserService(userRepository);
 const userController = new UserController(userService);
 
 const userRouter = Router();
-
-//todo: add getUserbyId if required or modify get to acquint both all or single user
+// todo: validate routes
 
 userRouter.get(
   "/",
@@ -31,10 +30,17 @@ userRouter.post(
 );
 
 userRouter.patch(
-  "/",
+  "/:id/status",
   jwtService.verifyToken,
   checkRole(UserRoles.ADMIN),
-  userController.updateUser,
+  userController.changeStatus,
+);
+
+userRouter.patch(
+  "/:id/role",
+  jwtService.verifyToken,
+  checkRole(UserRoles.ADMIN),
+  userController.changeRole,
 );
 
 export default userRouter;

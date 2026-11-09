@@ -62,16 +62,39 @@ export const fetchUsers = createAsyncThunk<
   }
 });
 
-export const updateUserDetails = createAsyncThunk<
+export const updateUserStatus = createAsyncThunk<
   UpdateUserPayload,
   UpdateUserPayload,
   { rejectValue: string }
->("user/updateUserDetails", async (payload, { rejectWithValue }) => {
+>("user/updateUserStatus", async (payload, { rejectWithValue }) => {
   try {
-    await api.patch("/users", payload);
+    await api.patch(`/users/${payload.id}/status`, payload);
     return payload;
   } catch (err: unknown) {
-    console.error("Error in updateUserDetails:", err);
+    console.error("Error in updateUserStatus:", err);
+    if (axios.isAxiosError(err)) {
+      return rejectWithValue(
+        (err.response?.data as { message?: string })?.message ||
+          err.response?.data ||
+          err.message,
+      );
+    }
+    return rejectWithValue(
+      err instanceof Error ? err.message : "Failed to update user",
+    );
+  }
+});
+
+export const updateUserRole = createAsyncThunk<
+  UpdateUserPayload,
+  UpdateUserPayload,
+  { rejectValue: string }
+>("user/updateUserRole", async (payload, { rejectWithValue }) => {
+  try {
+    await api.patch(`/users/${payload.id}/role`, payload);
+    return payload;
+  } catch (err: unknown) {
+    console.error("Error in updateUserRole:", err);
     if (axios.isAxiosError(err)) {
       return rejectWithValue(
         (err.response?.data as { message?: string })?.message ||

@@ -2,12 +2,21 @@ export const CUSTOMER_STATUSES = ["ACTIVE", "INACTIVE"] as const;
 
 export type CustomerStatus = (typeof CUSTOMER_STATUSES)[number];
 
+export interface ICreateContactInput {
+  id?: string;
+  name: string;
+  role?: string;
+  email?: string | null;
+  phone?: string | null;
+  isPrimary?: boolean;
+}
+
 export interface ICreateCustomerInput {
   name: string;
-  billingAddress: string | null;
-  notes: string | null;
-  status: CustomerStatus;
-  contacts: IContactWrite[];
+  billingAddress?: string | null;
+  notes?: string | null;
+  status?: CustomerStatus;
+  contacts?: ICreateContactInput[];
 }
 
 export interface IContactWrite {
@@ -32,6 +41,7 @@ export interface IUpdateCustomerInput {
   billingAddress?: string | null;
   notes?: string | null;
   status?: CustomerStatus;
+  contacts?: ICreateContactInput[];
 }
 
 export interface ICustomerListFilter {
@@ -49,16 +59,23 @@ export interface IContactRecord {
   isPrimary: boolean;
 }
 
+export interface ICloudAccountRecord {
+  id: string;
+  provider: string;
+  externalAccountId: string;
+}
+
 export interface ICustomerRecord {
   id: string;
   name: string;
   billingAddress: string | null;
   notes: string | null;
   status: CustomerStatus;
-  onboardingSteps?: IOnboardingSteps,
+  onboardingSteps?: IOnboardingSteps;
   createdAt: string;
   updatedAt: string;
   contacts?: IContactRecord[];
+  cloudAccounts?: ICloudAccountRecord[];
 }
 
 export interface IOnboardingSteps{

@@ -35,14 +35,12 @@ class UserService implements IUserService {
     return this.userRepository.getAllUsers();
   };
 
-  updateUser(
-    id: string,
-    email: string,
-    role: string,
-    isActive: boolean,
-    name?: string,
-  ): Promise<boolean | undefined> {
-    return this.userRepository.updateUser(id, email, role, isActive, name);
+  changeStatus(id: string, isActive: boolean): Promise<boolean | undefined> {
+    return this.userRepository.changeStatus(id, isActive);
+  }
+
+  changeRole(id: string, role: string): Promise<boolean | undefined> {
+    return this.userRepository.changeRole(id, role);
   }
 }
 
