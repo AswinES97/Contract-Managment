@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { initialServiceTypes } from "@/data/mockData";
 import type { Contact } from "@/types/contractManagement";
 import ContactsEditor from "@/components/ContactsEditor";
 import type { AppDispatch, RootState } from "@/redux/store";
@@ -72,10 +71,9 @@ export default function OnboardingPage() {
     dispatch(fetchServiceTypes());
   }, [dispatch]);
 
-  const availableServiceTypes =
-    fetchedServiceTypes && fetchedServiceTypes.length > 0
-      ? fetchedServiceTypes.filter((s) => s.isActive !== false)
-      : initialServiceTypes.filter((s) => s.isActive !== false);
+  const availableServiceTypes = fetchedServiceTypes.filter(
+    (s) => s.isActive !== false,
+  );
 
   const [isNewCustomer, setIsNewCustomer] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");

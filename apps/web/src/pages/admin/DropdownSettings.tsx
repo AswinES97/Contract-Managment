@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { billingFrequencies, billingTimings } from "@/data/mockData";
+
 import { toast } from "sonner";
 import type { AppDispatch, RootState } from "@/redux/store";
 import {
@@ -11,6 +11,9 @@ import {
   deleteServiceType,
   type ServiceTypeData,
 } from "@/redux/serviceTypeThunk";
+
+const billingFrequencies = ["Monthly", "Quarterly", "Yearly"];
+const billingTimings = ["In advance", "In arrears"];
 
 export default function DropdownSettingsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -410,7 +413,7 @@ export default function DropdownSettingsPage() {
         <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-6 space-y-6">
           <div className="border-b border-slate-100 pb-3">
             <h2 className="text-base font-bold text-slate-900">
-              Payment Terms 
+              Payment Terms
             </h2>
           </div>
 
