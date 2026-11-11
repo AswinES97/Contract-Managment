@@ -5,9 +5,8 @@ import api from "@/api/axios";
 export interface RawServiceTyperResponse {
   id: string;
   name?: string;
-  serviceName?: string;
   monthlyPrice?: number | string;
-  monthlyBaseCharge?: number | string;
+  isVariable?: boolean;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -16,9 +15,8 @@ export interface RawServiceTyperResponse {
 export interface ServiceTypeData {
   id: string;
   name: string;
-  serviceName: string;
-  monthlyPrice: number;
-  monthlyBaseCharge: number;
+  monthlyPrice?: number;
+  isVariable?: boolean;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -26,18 +24,16 @@ export interface ServiceTypeData {
 
 export interface ICreateServiceTypePayload {
   name?: string;
-  serviceName?: string;
   monthlyPrice?: number | string;
-  monthlyBaseCharge?: number | string;
+  isVariable?: boolean;
   isActive?: boolean;
 }
 
 export interface IUpdateServiceTypePayload {
   id: string;
   name?: string;
-  serviceName?: string;
   monthlyPrice?: number | string;
-  monthlyBaseCharge?: number | string;
+  isVariable?: boolean;
   isActive?: boolean;
 }
 
@@ -66,8 +62,8 @@ const extractErrorMessage = (err: unknown, defaultMsg: string): string => {
 export const normalizeServiceType = (
   raw: RawServiceTyperResponse,
 ): ServiceTypeData => {
-  const name = raw.name || raw.serviceName || "";
-  const rawPrice = raw.monthlyPrice ?? raw.monthlyBaseCharge;
+  const name = raw.name || "";
+  const rawPrice = raw.monthlyPrice;
   const numPrice =
     typeof rawPrice === "number" ? rawPrice : parseFloat(String(rawPrice || 0));
   const finalPrice = isNaN(numPrice) ? 0 : numPrice;
@@ -75,9 +71,8 @@ export const normalizeServiceType = (
   return {
     id: raw.id,
     name,
-    serviceName: name,
     monthlyPrice: finalPrice,
-    monthlyBaseCharge: finalPrice,
+    isVariable: Boolean(raw.isVariable),
     isActive: raw.isActive ?? true,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
@@ -110,21 +105,13 @@ export const createServiceTypes = createAsyncThunk<
   { rejectValue: string }
 >("serviceTypes/createServiceTypes", async (payload, { rejectWithValue }) => {
   try {
-    const resolvedName = payload.name ?? payload.serviceName;
-    const rawPrice = payload.monthlyPrice ?? payload.monthlyBaseCharge;
-    const numPrice =
-      typeof rawPrice === "number"
-        ? rawPrice
-        : parseFloat(String(rawPrice || 0));
-
     const res = await api.post<{
       data?: RawServiceTyperResponse;
     }>("/service-types", {
-      name: resolvedName,
-      serviceName: resolvedName,
-      monthlyPrice: isNaN(numPrice) ? 0 : numPrice,
-      monthlyBaseCharge: isNaN(numPrice) ? 0 : numPrice,
-      isActive: payload.isActive !== undefined ? payload.isActive : true,
+      name: payload.name,
+      monthlyPrice: payload.monthlyPrice,
+      isVariable: payload.isVariable,
+      isActive: payload.isActive,
     });
 
     const serviceType = res.data?.data;
@@ -148,36 +135,18 @@ export const updateServiceType = createAsyncThunk<
   { rejectValue: string }
 >("serviceTypes/updateServiceType", async (payload, { rejectWithValue }) => {
   try {
-    const resolvedName = payload.name ?? payload.serviceName;
-    const rawPrice = payload.monthlyPrice ?? payload.monthlyBaseCharge;
-    const body: Record<string, unknown> = {};
-
-    if (resolvedName !== undefined) {
-      body.name = resolvedName;
-      body.serviceName = resolvedName;
-    }
-    if (rawPrice !== undefined) {
-      const numPrice =
-        typeof rawPrice === "number" ? rawPrice : parseFloat(String(rawPrice));
-      body.monthlyPrice = isNaN(numPrice) ? 0 : numPrice;
-      body.monthlyBaseCharge = isNaN(numPrice) ? 0 : numPrice;
-    }
-    if (payload.isActive !== undefined) {
-      body.isActive = payload.isActive;
-    }
-
     const res = await api.patch<{ data?: RawServiceTyperResponse }>(
       `/service-types/${payload.id}`,
-      body,
+      payload,
     );
 
     const updated = res.data?.data;
     if (!updated) {
       return normalizeServiceType({
         id: payload.id,
-        name: resolvedName,
-        serviceName: resolvedName,
-        monthlyPrice: rawPrice !== undefined ? Number(rawPrice) : undefined,
+        name: payload.name,
+        monthlyPrice: payload.monthlyPrice,
+        isVariable: payload.isVariable,
         isActive: payload.isActive ?? true,
       });
     }
@@ -211,20 +180,3 @@ export const updateServiceTypeStatus = createAsyncThunk<
     }
   },
 );
-
-export const deleteServiceType = createAsyncThunk<
-  { id: string },
-  string,
-  { rejectValue: string }
->("serviceTypes/deleteServiceType", async (id, { rejectWithValue }) => {
-  try {
-    await api.delete(`/service-types/${id}`);
-    return { id };
-  } catch (err: unknown) {
-    console.error("Error in deleteServiceType:", err);
-    return rejectWithValue(
-      extractErrorMessage(err, "Failed to delete service type"),
-    );
-  }
-});
-export const removeServiceType = deleteServiceType;

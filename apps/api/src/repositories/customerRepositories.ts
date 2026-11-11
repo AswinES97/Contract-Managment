@@ -1,10 +1,7 @@
 import { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import {
-  IContactRecord,
-  IContactWrite,
   ICreateCustomerInput,
   ICustomerListFilter,
-  CustomerMutationResult,
   ICustomerRecord,
   CustomerStatus,
   IUpdateCustomerInput,
@@ -194,68 +191,5 @@ export class CustomerRepositories implements ICustomerRepository {
 
       return this.formatCustomer(updated);
     });
-  }
-
-  async addContact(input: IContactWrite): Promise<CustomerMutationResult> {
-    return this.prisma.$transaction(async (tx) => {
-      if (!(await this.lockCustomer(tx, input.customerId))) {
-        return { status: "customer_not_found" };
-      }
-
-      const primaryCount = await tx.contact.count({
-        where: { customerId: input.customerId, isPrimary: true },
-      });
-      const isPrimary = primaryCount === 0 ? true : input.isPrimary;
-
-      if (isPrimary) {
-        await tx.contact.updateMany({
-          where: { customerId: input.customerId, isPrimary: true },
-          data: { isPrimary: false },
-        });
-      }
-
-      const contact = await tx.contact.create({
-        data: {
-          customerId: input.customerId,
-          name: input.name,
-          role: input.role,
-          email: input.email,
-          phone: input.phone,
-          isPrimary,
-        },
-        select: {
-          id: true,
-          customerId: true,
-          name: true,
-          role: true,
-          email: true,
-          phone: true,
-          isPrimary: true,
-        },
-      });
-
-      return {
-        status: "ok",
-        contact: {
-          id: contact.id,
-          customerId: contact.customerId,
-          name: contact.name,
-          role: contact.role || "",
-          email: contact.email,
-          phone: contact.phone,
-          isPrimary: contact.isPrimary,
-        },
-      };
-    });
-  }
-
-  private async lockCustomer(
-    tx: Prisma.TransactionClient,
-    customerId: string,
-  ): Promise<boolean> {
-    const rows = await tx.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM "customers" WHERE id = CAST(${customerId} AS uuid) FOR UPDATE
-    `;
-    return rows.length > 0;
   }
 }

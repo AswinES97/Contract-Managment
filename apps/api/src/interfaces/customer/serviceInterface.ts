@@ -19,5 +19,4 @@ export interface ICustomerService {
   updateCustomer(id: string, data: IUpdateCustomerInput): Promise<ICustomerRecord>;
   updateCustomerStatus(id: string, status: CustomerStatus): Promise<ICustomerRecord>;
   addCloudDetails(body: unknown): Promise<IBaseCloudAccountBody>;
-  addContact(body: unknown): Promise<IContactRecord>;
 }

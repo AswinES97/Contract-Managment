@@ -12,6 +12,22 @@ export interface OnboardingStepItem {
   completed: boolean;
   completedAt: string | null;
   contract?: OnboardingContractTerms;
+  services?: OnboardingServiceItem[];
+  cloud?: OnboardingCloudDetails;
+  customer?: {
+    id: string;
+    name: string;
+    billingAddress?: string;
+    notes?: string;
+    contacts: Array<{
+      id?: string;
+      name: string;
+      role?: string;
+      email?: string | null;
+      phone?: string | null;
+      isPrimary?: boolean;
+    }>;
+  };
 }
 
 export interface OnboardingServiceItem {
@@ -119,14 +135,15 @@ export const completeOnboarding = createAsyncThunk<
 
 export const fetchOnboardingSteps = createAsyncThunk<
   OnboardingStepItem[],
-  { customerId: string; contractId?: string | null },
+  { customerId: string },
   { rejectValue: string }
->("onboarding/fetchSteps", async ({ customerId, contractId }, { rejectWithValue }) => {
+>("onboarding/fetchSteps", async ({ customerId }, { rejectWithValue }) => {
   try {
-    const url = contractId
-      ? `/onboarding/${customerId}/steps?contractId=${encodeURIComponent(contractId)}`
-      : `/onboarding/${customerId}/steps`;
-    const res = await api.get<{ message?: string; data?: OnboardingStepItem[] }>(url);
+    const url = `/onboarding/${customerId}/steps`;
+    const res = await api.get<{
+      message?: string;
+      data?: OnboardingStepItem[];
+    }>(url);
     return res.data?.data || [];
   } catch (err: unknown) {
     console.error("Error in fetchOnboardingSteps:", err);

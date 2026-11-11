@@ -2,10 +2,6 @@ import { PrismaClient } from "@prisma/client/extension";
 import { IUserRepository } from "../interfaces/user/repositoryInterface.js";
 import { IUser } from "../interfaces/user/commonInterface.js";
 import { handleError } from "../middlewares/errorHandler.js";
-import { omit } from "zod/mini";
-
-// todo: check returns and interface
-
 class UserRepositories implements IUserRepository {
   private prisma: PrismaClient;
 

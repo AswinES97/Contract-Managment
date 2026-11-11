@@ -86,11 +86,7 @@ export class CustomerController {
     }
   };
 
-  addCloudDetails = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  addCloudDetails = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const customerId = String(req.params.id);
       req.body.customerId = customerId;
@@ -100,20 +96,6 @@ export class CustomerController {
       return res.status(StatusCode.CREATED).json({
         message: "Created Successfully",
         data: cloudAcc,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  addContact = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const customerId = String(req.params.id);
-      req.body.customerId = customerId;
-      const contact = await this.customerService.addContact(req.body);
-      return res.status(StatusCode.CREATED).json({
-        message: "Created Successfully",
-        data: contact,
       });
     } catch (error) {
       next(error);

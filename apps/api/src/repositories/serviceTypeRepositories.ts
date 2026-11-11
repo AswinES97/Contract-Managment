@@ -17,8 +17,9 @@ export class ServiceTypeRepositories implements IServiceTypeRepository {
     const created = await this.prisma.serviceType.create({
       data: {
         name: data.name,
-        monthlyPrice: data.monthlyPrice !== undefined ? data.monthlyPrice : 0,
-        isActive: data.isActive !== undefined ? data.isActive : true,
+        monthlyPrice: data.monthlyPrice,
+        isVariable: data.isVariable,
+        isActive: data.isActive,
       },
     });
 
@@ -27,6 +28,7 @@ export class ServiceTypeRepositories implements IServiceTypeRepository {
       name: created.name,
       monthlyPrice:
         created.monthlyPrice !== null ? Number(created.monthlyPrice) : 0,
+      isVariable: Boolean(created.isVariable),
       isActive: created.isActive,
     };
   };
@@ -40,6 +42,7 @@ export class ServiceTypeRepositories implements IServiceTypeRepository {
       id: item.id,
       name: item.name,
       monthlyPrice: item.monthlyPrice !== null ? Number(item.monthlyPrice) : 0,
+      isVariable: Boolean(item.isVariable),
       isActive: item.isActive,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
@@ -57,6 +60,7 @@ export class ServiceTypeRepositories implements IServiceTypeRepository {
       id: item.id,
       name: item.name,
       monthlyPrice: item.monthlyPrice !== null ? Number(item.monthlyPrice) : 0,
+      isVariable: Boolean(item.isVariable),
       isActive: item.isActive,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
@@ -70,11 +74,10 @@ export class ServiceTypeRepositories implements IServiceTypeRepository {
     const updated = await this.prisma.serviceType.update({
       where: { id },
       data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.monthlyPrice !== undefined && {
-          monthlyPrice: data.monthlyPrice,
-        }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
+        name: data.name,
+        monthlyPrice: data.monthlyPrice,
+        isVariable: data.isVariable,
+        isActive: data.isActive,
       },
     });
 
@@ -83,6 +86,7 @@ export class ServiceTypeRepositories implements IServiceTypeRepository {
       name: updated.name,
       monthlyPrice:
         updated.monthlyPrice !== null ? Number(updated.monthlyPrice) : 0,
+      isVariable: Boolean(updated.isVariable),
       isActive: updated.isActive,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,

@@ -7,16 +7,13 @@ import UserService from "../services/users/userServices.js";
 import UserRepositories from "../repositories/userRepositories.js";
 
 const jwtService = new JwtTokenService();
-
 const userRepository = new UserRepositories(prisma);
 const userService = new UserService(userRepository);
-
 const authService = new AuthService(userService);
 const authController = new AuthController(authService, jwtService);
 
 const authRouter = Router();
 
 authRouter.post("/login", authController.login);
-// authRouter.post("/logout", authController.logout);
 
 export default authRouter;

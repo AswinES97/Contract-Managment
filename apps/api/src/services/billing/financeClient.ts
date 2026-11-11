@@ -21,13 +21,6 @@ export interface IFinanceSystemClient {
     request: IFinanceCheckRequest,
   ): Promise<IFinanceCheckResponse>;
 }
-
-/**
- * REST API client stub with simulated bearer token authentication.
- * Follows the assumed specification:
- * POST /erp/v1/invoices/status-check
- * Headers: Authorization: Bearer <FINANCE_API_TOKEN>
- */
 export class FinanceSystemStubClient implements IFinanceSystemClient {
   async checkInvoiceStatus(
     request: IFinanceCheckRequest,
@@ -36,7 +29,6 @@ export class FinanceSystemStubClient implements IFinanceSystemClient {
     const todayStr = now.toISOString().slice(0, 10);
     const checkedAtStr = now.toISOString().replace("T", " ").slice(0, 19);
 
-    // If already COMPLETED, keep it completed
     if (request.currentStatus === "COMPLETED") {
       return {
         status: "COMPLETED",
@@ -49,7 +41,6 @@ export class FinanceSystemStubClient implements IFinanceSystemClient {
       };
     }
 
-    // Transition from PENDING -> RAISED, or RAISED -> COMPLETED
     const nextStatus: InvoiceState =
       request.currentStatus === "RAISED" ? "COMPLETED" : "RAISED";
 

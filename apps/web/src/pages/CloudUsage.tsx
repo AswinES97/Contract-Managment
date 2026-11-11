@@ -286,8 +286,7 @@ export default function CloudUsagePage() {
                     colSpan={7}
                     className="px-6 py-8 text-center text-slate-400 text-sm"
                   >
-                    No cloud usage records found. Click &quot;⚡ Trigger AWS
-                    Usage Sync&quot; or upload Azure usage to record data.
+                    No cloud usage records found.
                   </td>
                 </tr>
               ) : (

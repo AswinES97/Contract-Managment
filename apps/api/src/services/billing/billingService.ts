@@ -31,7 +31,6 @@ export class BillingService implements IBillService {
     customerId?: string;
   }): Promise<IBillRecord[]> => {
     let bills = await this.repository.getAll(filter);
-    // If no bills exist in DB yet, auto-calculate so the user sees real calculated data
     if (bills.length === 0) {
       await this.calculateBills();
       bills = await this.repository.getAll(filter);
@@ -125,7 +124,6 @@ export class BillingService implements IBillService {
         }
       }
 
-      // Calculate Cloud Usage from linked cloud accounts
       for (const account of contract.customer.cloudAccounts || []) {
         for (const usage of account.usage || []) {
           const rawAmount = Number(usage.amount);
@@ -166,7 +164,6 @@ export class BillingService implements IBillService {
         }
       }
 
-      // If no line items, create a standard minimum line item
       if (lineItems.length === 0) {
         lineItems.push({
           description: `${contract.scopeDescription || "Managed Services Base Agreement"}`,
@@ -181,7 +178,6 @@ export class BillingService implements IBillService {
 
       const totalAmount = fixedTotal + (cloudUsageTotal - cloudDiscountTotal);
 
-      // Period dates
       const periodStart =
         options?.periodStart || contract.startDate || new Date("2026-10-01");
       const periodEnd =
@@ -219,7 +215,6 @@ export class BillingService implements IBillService {
       throw new Error(`Bill not found with ID ${billId}`);
     }
 
-    // Call Finance ERP REST stub with token auth
     const financeResponse = await this.financeClient.checkInvoiceStatus({
       customerName: bill.customerName,
       billingMonth: bill.billingMonth,

@@ -1,7 +1,8 @@
 model ServiceType {
   id           String  @id @default(uuid()) @db.Uuid
-  name         String  @unique
+  name         String
   monthlyPrice Int?    @default(0) @map("monthly_price")
+  isVariable   Boolean @default(false) @map("is_variable")
   isActive     Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")

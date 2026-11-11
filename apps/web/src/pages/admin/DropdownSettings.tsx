@@ -8,7 +8,6 @@ import {
   createServiceType,
   updateServiceType,
   updateServiceTypeStatus,
-  deleteServiceType,
   type ServiceTypeData,
 } from "@/redux/serviceTypeThunk";
 
@@ -24,18 +23,15 @@ export default function DropdownSettingsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newServiceName, setNewServiceName] = useState("");
   const [newMonthlyPrice, setNewMonthlyPrice] = useState<string>("0");
+  const [newIsVariable, setNewIsVariable] = useState(false);
   const [newIsActive, setNewIsActive] = useState(true);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ServiceTypeData | null>(null);
   const [editName, setEditName] = useState("");
   const [editMonthlyPrice, setEditMonthlyPrice] = useState<string>("0");
+  const [editIsVariable, setEditIsVariable] = useState(false);
   const [editIsActive, setEditIsActive] = useState(true);
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deletingItem, setDeletingItem] = useState<ServiceTypeData | null>(
-    null,
-  );
 
   useEffect(() => {
     dispatch(fetchServiceTypes());
@@ -48,6 +44,7 @@ export default function DropdownSettingsPage() {
   const handleOpenAddModal = () => {
     setNewServiceName("");
     setNewMonthlyPrice("0");
+    setNewIsVariable(false);
     setNewIsActive(true);
     setIsAddModalOpen(true);
   };
@@ -60,8 +57,8 @@ export default function DropdownSettingsPage() {
       return;
     }
 
-    const priceNum = parseFloat(newMonthlyPrice);
-    if (isNaN(priceNum) || priceNum < 0) {
+    const priceNum = newIsVariable ? 0 : parseFloat(newMonthlyPrice);
+    if (!newIsVariable && (isNaN(priceNum) || priceNum < 0)) {
       toast.error("Please enter a valid monthly price (0 or higher)");
       return;
     }
@@ -69,9 +66,8 @@ export default function DropdownSettingsPage() {
     const action = await dispatch(
       createServiceType({
         name: trimmedName,
-        serviceName: trimmedName,
         monthlyPrice: priceNum,
-        monthlyBaseCharge: priceNum,
+        isVariable: newIsVariable,
         isActive: newIsActive,
       }),
     );
@@ -83,6 +79,7 @@ export default function DropdownSettingsPage() {
       setIsAddModalOpen(false);
       setNewServiceName("");
       setNewMonthlyPrice("0");
+      setNewIsVariable(false);
     } else {
       const errorMsg =
         typeof action.payload === "string"
@@ -94,10 +91,11 @@ export default function DropdownSettingsPage() {
 
   const handleOpenEditModal = (item: ServiceTypeData) => {
     setEditingItem(item);
-    setEditName(item.name || item.serviceName || "");
+    setEditName(item.name || "");
     setEditMonthlyPrice(
       item.monthlyPrice !== undefined ? String(item.monthlyPrice) : "0",
     );
+    setEditIsVariable(Boolean(item.isVariable));
     setEditIsActive(item.isActive);
     setIsEditModalOpen(true);
   };
@@ -112,8 +110,8 @@ export default function DropdownSettingsPage() {
       return;
     }
 
-    const priceNum = parseFloat(editMonthlyPrice);
-    if (isNaN(priceNum) || priceNum < 0) {
+    const priceNum = editIsVariable ? 0 : parseFloat(editMonthlyPrice);
+    if (!editIsVariable && (isNaN(priceNum) || priceNum < 0)) {
       toast.error("Please enter a valid monthly price");
       return;
     }
@@ -122,9 +120,8 @@ export default function DropdownSettingsPage() {
       updateServiceType({
         id: editingItem.id,
         name: trimmedName,
-        serviceName: trimmedName,
         monthlyPrice: priceNum,
-        monthlyBaseCharge: priceNum,
+        isVariable: editIsVariable,
         isActive: editIsActive,
       }),
     );
@@ -153,40 +150,13 @@ export default function DropdownSettingsPage() {
 
     if (updateServiceTypeStatus.fulfilled.match(action)) {
       toast.success(
-        `Service type ${item.name || item.serviceName} ${
-          nextStatus ? "enabled" : "disabled"
-        }`,
+        `Service type ${item.name} ${nextStatus ? "enabled" : "disabled"}`,
       );
     } else {
       const errorMsg =
         typeof action.payload === "string"
           ? action.payload
           : "Failed to update status";
-      toast.error(errorMsg);
-    }
-  };
-
-  // const handleOpenDeleteModal = (item: ServiceTypeData) => {
-  //   setDeletingItem(item);
-  //   setIsDeleteModalOpen(true);
-  // };
-
-  const handleDeleteServiceType = async () => {
-    if (!deletingItem) return;
-
-    const action = await dispatch(deleteServiceType(deletingItem.id));
-
-    if (deleteServiceType.fulfilled.match(action)) {
-      toast.success(
-        `Service type "${deletingItem.name || deletingItem.serviceName}" deleted`,
-      );
-      setIsDeleteModalOpen(false);
-      setDeletingItem(null);
-    } else {
-      const errorMsg =
-        typeof action.payload === "string"
-          ? action.payload
-          : "Failed to delete service type";
       toast.error(errorMsg);
     }
   };
@@ -311,9 +281,10 @@ export default function DropdownSettingsPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
                   {serviceTypes.map((st) => {
-                    const displayName = st.name || st.serviceName;
-                    const price =
-                      st.monthlyPrice ?? Number(st.monthlyBaseCharge ?? 0);
+                    const displayName = st.name;
+                    const price = st.monthlyPrice ?? 0;
+                    const isVar = Boolean(st.isVariable);
+
                     return (
                       <tr
                         key={st.id}
@@ -330,27 +301,50 @@ export default function DropdownSettingsPage() {
                               <span className="font-semibold text-slate-900 block">
                                 {displayName}
                               </span>
+                              {isVar && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-purple-700 bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded mt-0.5">
+                                  <svg
+                                    className="w-2.5 h-2.5 text-purple-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                                    />
+                                  </svg>
+                                </span>
+                              )}
                             </div>
                           </div>
                         </td>
                         <td className="py-3 px-3">
-                          <div className="font-semibold text-slate-800">
-                            {price > 0 ? (
-                              <>
-                                AED{" "}
-                                {price.toLocaleString("en-US", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                                <span className="text-[10px] text-slate-400 font-normal ml-1">
-                                  / month
+                          <div className="space-y-0.5">
+                            <div className="font-semibold text-slate-800">
+                              {price > 0 ? (
+                                <>
+                                  AED{" "}
+                                  {price.toLocaleString("en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                  <span className="text-[10px] text-slate-400 font-normal ml-1">
+                                    / month base
+                                  </span>
+                                </>
+                              ) : isVar ? (
+                                <span className="text-purple-700 font-medium">
+                                  Variable Only
                                 </span>
-                              </>
-                            ) : (
-                              <span className="text-slate-400 italic">
-                                AED 0.00 (Usage/Variable)
-                              </span>
-                            )}
+                              ) : (
+                                <span className="text-slate-400 italic">
+                                  AED 0.00
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="py-3 px-3">
@@ -390,14 +384,6 @@ export default function DropdownSettingsPage() {
                             >
                               {st.isActive ? "Disable" : "Enable"}
                             </button>
-                            {/* <button
-                              onClick={() => handleOpenDeleteModal(st)}
-                              disabled={updateLoading}
-                              className="px-2 py-1 text-rose-600 hover:bg-rose-50 rounded text-xs font-medium transition cursor-pointer disabled:opacity-50"
-                              title="Delete Service Type"
-                            >
-                              Delete
-                            </button> */}
                           </div>
                         </td>
                       </tr>
@@ -496,26 +482,48 @@ export default function DropdownSettingsPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Monthly Base Charge (AED){" "}
-                  <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-xs pointer-events-none">
-                    AED
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={newMonthlyPrice}
-                    onChange={(e) => setNewMonthlyPrice(e.target.value)}
-                    placeholder="0.00"
-                    className="w-full pl-12 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-                  />
+              {!newIsVariable && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Monthly Base Charge (AED){" "}
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-xs pointer-events-none">
+                      AED
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newMonthlyPrice}
+                      onChange={(e) => setNewMonthlyPrice(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-12 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                  </div>
                 </div>
+              )}
+
+              {/* Variable Monthly Charge - Add modal */}
+              <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newIsVariable}
+                    onChange={(e) => setNewIsVariable(e.target.checked)}
+                    className="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500"
+                  />
+                  <div>
+                    <span className="text-xs font-semibold text-slate-800 block">
+                      Variable Monthly Charge
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      Usage-based charge collected from AWS — no fixed price
+                      required
+                    </span>
+                  </div>
+                </label>
               </div>
 
               <div className="pt-2">
@@ -631,25 +639,47 @@ export default function DropdownSettingsPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Monthly Base Charge (AED){" "}
-                  <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-xs pointer-events-none">
-                    AED
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={editMonthlyPrice}
-                    onChange={(e) => setEditMonthlyPrice(e.target.value)}
-                    className="w-full pl-12 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-                  />
+              {!editIsVariable && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Monthly Base Charge (AED){" "}
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-xs pointer-events-none">
+                      AED
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editMonthlyPrice}
+                      onChange={(e) => setEditMonthlyPrice(e.target.value)}
+                      className="w-full pl-12 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                    />
+                  </div>
                 </div>
+              )}
+
+              {/* Variable Monthly Charge - Edit modal */}
+              <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editIsVariable}
+                    onChange={(e) => setEditIsVariable(e.target.checked)}
+                    className="w-4 h-4 rounded text-violet-600 border-slate-300 focus:ring-violet-500"
+                  />
+                  <div>
+                    <span className="text-xs font-semibold text-slate-800 block">
+                      Variable Monthly Charge
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      Usage-based charge collected from AWS — no fixed price
+                      required
+                    </span>
+                  </div>
+                </label>
               </div>
 
               <div className="pt-2">
@@ -714,64 +744,6 @@ export default function DropdownSettingsPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && deletingItem && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 mb-3 text-rose-600">
-              <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold text-slate-900">
-                Delete Service Type
-              </h3>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              Are you sure you want to remove{" "}
-              <span className="font-semibold text-slate-900">
-                "{deletingItem.name || deletingItem.serviceName}"
-              </span>
-              ? This service will no longer be selectable for new contracts.
-            </p>
-
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDeleteModalOpen(false);
-                  setDeletingItem(null);
-                }}
-                disabled={updateLoading}
-                className="px-4 py-2 border border-slate-300 hover:bg-slate-50 rounded-lg text-slate-700 text-xs font-semibold transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteServiceType}
-                disabled={updateLoading}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shadow-xs transition cursor-pointer"
-              >
-                {updateLoading ? "Deleting..." : "Delete"}
-              </button>
-            </div>
           </div>
         </div>
       )}

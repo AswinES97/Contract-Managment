@@ -3,13 +3,10 @@ import { IBaseCloudAccountBody } from "../../interfaces/cloud/commonInterface.js
 import { ICloudService } from "../../interfaces/cloud/serviceInterface.js";
 import {
   CUSTOMER_STATUSES,
-  IContactWrite,
   ICreateCustomerInput,
-  CustomerMutationResult,
   ICustomerRecord,
   CustomerStatus,
   IUpdateCustomerInput,
-  IContactRecord,
 } from "../../interfaces/customer/commonInterface.js";
 import { ICustomerRepository } from "../../interfaces/customer/repositoryInterface.js";
 import {
@@ -106,41 +103,7 @@ export class CustomerService implements ICustomerService {
     return updated;
   }
 
-  addCloudDetails = async (
-    body: unknown,
-  ): Promise<IBaseCloudAccountBody> => {
+  addCloudDetails = async (body: unknown): Promise<IBaseCloudAccountBody> => {
     return this.cloudService.createCloudDetails(body as IBaseCloudAccountBody);
   };
-
-  addContact = async (body: unknown): Promise<IContactRecord> => {
-    const contact = body as IContactWrite;
-    const result = await this.customerRepository.addContact(contact);
-    return this.unwrap(result);
-  };
-
-  private unwrap(result: CustomerMutationResult): IContactRecord {
-    switch (result.status) {
-      case "ok":
-        return result.contact;
-      case "customer_not_found":
-        throw new CustomError("Customer not found.", StatusCode.NOT_FOUND);
-      case "contact_not_found":
-        throw new CustomError("Contact not found.", StatusCode.NOT_FOUND);
-      case "primary_required":
-        throw new CustomError(
-          "Customer must have a primary contact.",
-          StatusCode.BAD_REQUEST,
-        );
-      case "last_contact":
-        throw new CustomError(
-          "Customer must have at least one contact.",
-          StatusCode.BAD_REQUEST,
-        );
-      default:
-        throw new CustomError(
-          "Failed to mutate contact.",
-          StatusCode.INTERNAL_SERVER_ERROR,
-        );
-    }
-  }
 }

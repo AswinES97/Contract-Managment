@@ -243,24 +243,3 @@ export const addCustomerCloudAccount = createAsyncThunk<
   }
 });
 
-export const addCustomerContact = createAsyncThunk<
-  Contact,
-  AddContactPayload,
-  { rejectValue: string }
->("customer/addContact", async (payload, { rejectWithValue }) => {
-  try {
-    const res = await api.post<{ data?: Contact }>(
-      `/customer/${payload.customerId}/contact`,
-      payload,
-    );
-    if (!res.data?.data) {
-      return rejectWithValue("Failed to add contact");
-    }
-    return res.data.data;
-  } catch (err: unknown) {
-    console.error("Error in addCustomerContact:", err);
-    return rejectWithValue(
-      extractErrorMessage(err, "Failed to add contact"),
-    );
-  }
-});

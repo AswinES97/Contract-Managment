@@ -16,10 +16,10 @@ model Bill {
   periodEnd           DateTime @map("period_end") @db.Date
   billingMonth        String   @map("billing_month")
   currency            String   @default("AED") @db.VarChar(3)
-  fixedAmount         Decimal  @default(0) @map("fixed_amount") @db.Decimal(14, 2)
-  cloudUsageAmount    Decimal  @default(0) @map("cloud_usage_amount") @db.Decimal(14, 2)
-  cloudDiscountAmount Decimal  @default(0) @map("cloud_discount_amount") @db.Decimal(14, 2)
-  totalAmount         Decimal  @map("total_amount") @db.Decimal(14, 2)
+  fixedAmount         Int      @default(0) @map("fixed_amount")
+  cloudUsageAmount    Int      @default(0) @map("cloud_usage_amount")
+  cloudDiscountAmount Int      @default(0) @map("cloud_discount_amount")
+  totalAmount         Int      @map("total_amount")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
@@ -38,10 +38,10 @@ model BillLineItem {
   billId             String             @map("bill_id") @db.Uuid
   description        String
   sourceType         BillLineSourceType @map("source_type")
-  quantity           Decimal            @default(1) @db.Decimal(12, 4)
-  unitAmount         Decimal            @map("unit_amount") @db.Decimal(14, 2)
-  discountPercentage Decimal            @default(0) @map("discount_percentage") @db.Decimal(5, 2)
-  finalAmount        Decimal            @map("final_amount") @db.Decimal(14, 2)
+  quantity           Int                @default(1)
+  unitAmount         Int                @map("unit_amount")
+  discountPercentage Int                @default(0) @map("discount_percentage")
+  finalAmount        Int                @map("final_amount")
   createdAt          DateTime           @default(now()) @map("created_at")
 
   bill Bill @relation(fields: [billId], references: [id], onDelete: Cascade)

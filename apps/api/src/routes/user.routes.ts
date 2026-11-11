@@ -1,13 +1,9 @@
 import { Router } from "express";
 import prisma from "../config/prismaConfig.js";
-import JwtTokenService from "../services/tokens/jwtTokenService.js";
 import UserService from "../services/users/userServices.js";
 import UserRepositories from "../repositories/userRepositories.js";
-import { checkRole } from "../middlewares/roleCheck.js";
-import UserRoles from "../constants/users.js";
 import { UserController } from "../controllers/userController.js";
-
-const jwtService = new JwtTokenService();
+import { adminRoles } from "../config/rolesConfig.js";
 
 const userRepository = new UserRepositories(prisma);
 const userService = new UserService(userRepository);
@@ -16,31 +12,9 @@ const userController = new UserController(userService);
 const userRouter = Router();
 // todo: validate routes
 
-userRouter.get(
-  "/",
-  jwtService.verifyToken,
-  checkRole(UserRoles.ADMIN),
-  userController.getAllUsers,
-);
-userRouter.post(
-  "/",
-  jwtService.verifyToken,
-  checkRole(UserRoles.ADMIN),
-  userController.createUser,
-);
-
-userRouter.patch(
-  "/:id/status",
-  jwtService.verifyToken,
-  checkRole(UserRoles.ADMIN),
-  userController.changeStatus,
-);
-
-userRouter.patch(
-  "/:id/role",
-  jwtService.verifyToken,
-  checkRole(UserRoles.ADMIN),
-  userController.changeRole,
-);
+userRouter.get("/", ...adminRoles, userController.getAllUsers);
+userRouter.post("/", ...adminRoles, userController.createUser);
+userRouter.patch("/:id/status", ...adminRoles, userController.changeStatus);
+userRouter.patch("/:id/role", ...adminRoles, userController.changeRole);
 
 export default userRouter;

@@ -20,7 +20,6 @@ test.env
 .windsurf
 .postman
 /postman
-/scripts
 
 
 /src/generated/prisma

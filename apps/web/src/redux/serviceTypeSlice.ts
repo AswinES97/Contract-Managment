@@ -5,7 +5,6 @@ import {
   fetchServiceTypes,
   updateServiceType,
   updateServiceTypeStatus,
-  deleteServiceType,
   type ServiceTypeData,
 } from "./serviceTypeThunk";
 
@@ -78,9 +77,8 @@ const serviceTypeSlice = createSlice({
         );
         if (target) {
           target.name = action.payload.name;
-          target.serviceName = action.payload.serviceName;
           target.monthlyPrice = action.payload.monthlyPrice;
-          target.monthlyBaseCharge = action.payload.monthlyBaseCharge;
+          target.isVariable = action.payload.isVariable;
           target.isActive = action.payload.isActive;
         }
       })
@@ -107,23 +105,6 @@ const serviceTypeSlice = createSlice({
       .addCase(updateServiceTypeStatus.rejected, (state, action) => {
         state.updateLoading = false;
         state.error = action.payload ?? "Failed to update service type status";
-      });
-
-    // deleteServiceType
-    builder
-      .addCase(deleteServiceType.pending, (state) => {
-        state.updateLoading = true;
-        state.error = null;
-      })
-      .addCase(deleteServiceType.fulfilled, (state, action) => {
-        state.updateLoading = false;
-        state.serviceTypes = state.serviceTypes.filter(
-          (s) => s.id !== action.payload.id,
-        );
-      })
-      .addCase(deleteServiceType.rejected, (state, action) => {
-        state.updateLoading = false;
-        state.error = action.payload ?? "Failed to delete service type";
       });
   },
 });

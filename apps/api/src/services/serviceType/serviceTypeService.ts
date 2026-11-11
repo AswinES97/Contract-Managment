@@ -41,6 +41,8 @@ export class ServiceTypeService implements IServiceTypeService {
       name: trimmedName,
       monthlyPrice:
         data.monthlyPrice !== undefined ? Number(data.monthlyPrice) : 0,
+      isVariable:
+        data.isVariable !== undefined ? Boolean(data.isVariable) : false,
       isActive: data.isActive !== undefined ? Boolean(data.isActive) : true,
     });
   }
@@ -103,6 +105,9 @@ export class ServiceTypeService implements IServiceTypeService {
       updatePayload.monthlyPrice = Number(data.monthlyPrice);
     }
 
+    if (data.isVariable !== undefined) {
+      updatePayload.isVariable = Boolean(data.isVariable);
+    }
     if (data.isActive !== undefined) {
       updatePayload.isActive = Boolean(data.isActive);
     }

@@ -154,9 +154,7 @@ export default function BillingPage() {
                     colSpan={7}
                     className="px-6 py-8 text-center text-slate-400 text-sm"
                   >
-                    No bills calculated yet. Click &quot;⚡ Recalculate
-                    Bills&quot; to compute billing periods from active
-                    contracts.
+                    No bills calculated yet.
                   </td>
                 </tr>
               ) : (

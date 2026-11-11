@@ -115,6 +115,7 @@ export interface ServiceTypeItem {
   id: string;
   name: string;
   monthlyPrice?: number;
+  isVariable?: boolean;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;

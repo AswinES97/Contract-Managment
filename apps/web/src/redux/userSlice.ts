@@ -56,8 +56,10 @@ const userSlice = createSlice({
         if (!action.payload?.id) return;
         const target = state.users.find((u) => u.id === action.payload.id);
         if (target) {
-          if (action.payload.isActive !== undefined) target.isActive = action.payload.isActive;
-          if (action.payload.role !== undefined) target.role = action.payload.role;
+          if (action.payload.isActive !== undefined)
+            target.isActive = action.payload.isActive;
+          if (action.payload.role !== undefined)
+            target.role = action.payload.role;
         }
       })
       .addCase(updateUserStatus.rejected, (state, action) => {
@@ -76,10 +78,14 @@ const userSlice = createSlice({
         if (!action.payload?.id) return;
         const target = state.users.find((u) => u.id === action.payload.id);
         if (target) {
-          if (action.payload.role !== undefined) target.role = action.payload.role;
-          if (action.payload.isActive !== undefined) target.isActive = action.payload.isActive;
-          if (action.payload.name !== undefined) target.name = action.payload.name;
-          if (action.payload.email !== undefined) target.email = action.payload.email;
+          if (action.payload.role !== undefined)
+            target.role = action.payload.role;
+          if (action.payload.isActive !== undefined)
+            target.isActive = action.payload.isActive;
+          if (action.payload.name !== undefined)
+            target.name = action.payload.name;
+          if (action.payload.email !== undefined)
+            target.email = action.payload.email;
         }
       })
       .addCase(updateUserRole.rejected, (state, action) => {
